@@ -1,6 +1,8 @@
 use std::io::{BufReader, BufRead};
 use std::fs::File;
 
+mod intcode_computer;
+
 fn module_fuel(mass: i32) -> i32 {
     (mass / 3).saturating_sub(2)
 }
@@ -19,7 +21,7 @@ fn module_fuel_all(mass: i32) -> i32 {
     }
 }
 
-fn main() {
+fn exec_day1() {
     println!("##### Day 1: The Tyranny of the Rocket Equation");
 
     println!("##### Part 1");
@@ -50,8 +52,45 @@ fn main() {
     println!(">>>>> Total mass with fuel:{}", total_mass_with_fuel);
 }
 
+fn read_file_to_vector(input_file_name: &str) -> Vec<i32> {
+    let mut final_vector = vec![];
+    let input_file = File::open(input_file_name);
+    let reader = BufReader::new(input_file.unwrap());
+
+    for line in reader.lines() {
+        for value in line.unwrap().split(',') {
+            final_vector.push(value.parse::<i32>().unwrap());
+        }
+    }
+
+    final_vector
+}
+
+fn exec_day2() {
+    println!("\n##### Day 2");
+
+    let _test_program1 = vec![1,9,10,3,2,3,11,0,99,30,40,50];
+    let _test_program2: Vec<i32> = vec![1,1,1,4,99,5,6,0,99];
+
+    let mut day2_program: Vec<i32> = read_file_to_vector("input/day2_input.txt");
+
+    // Change the program as instructed by AoC day 2 part 1
+    day2_program[1] = 12;
+    day2_program[2] = 2;
+
+    let mut computer = intcode_computer::IntcodeComputer::new();
+    let intcode_value = computer.run_program(day2_program, 0);
+
+    println!(">>>> Final value:{}", intcode_value);
+}
+
+fn main() {
+    exec_day1();
+    exec_day2();
+}
+
 #[cfg(test)]
-mod tests {
+mod day1_tests {
     use crate::{module_fuel, module_fuel_all};
 
     #[test]
@@ -67,4 +106,7 @@ mod tests {
         assert_eq!(module_fuel_all(1969), 966);
         assert_eq!(module_fuel_all(100756), 50346);
     }
+}
+
+mod day2_tests {
 }
