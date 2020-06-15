@@ -32,6 +32,7 @@ impl IntcodeComputer {
 
     pub fn run_program(&mut self, program_to_run: Vec<i32>, position_to_return: i32) -> i32 {
         self.program = program_to_run;
+        self.instruction_pointer = 0;
 
         // Run the program until we get the Halt instruction
         loop {
@@ -66,9 +67,9 @@ impl IntcodeComputer {
             rhs = self.program[self.program[self.instruction_pointer + RHS_OFFSET] as usize];
             destination = self.program[self.instruction_pointer + DESTINATION_OFFSET];
 
-            println!(">>>> opcode:{} | lhs:{} (address:{}) | rhs:{} (address:{}) | destination:{}",
-                     self.program[self.instruction_pointer], lhs, self.program[self.instruction_pointer + LHS_OFFSET],
-                     rhs, self.program[self.instruction_pointer + RHS_OFFSET], destination);
+            // println!(">>>> opcode:{} | lhs:{} (address:{}) | rhs:{} (address:{}) | destination:{}",
+            //          self.program[self.instruction_pointer], lhs, self.program[self.instruction_pointer + LHS_OFFSET],
+            //          rhs, self.program[self.instruction_pointer + RHS_OFFSET], destination);
         }
 
         Instruction { opcode: converted_opcode, lhs, rhs, destination, }

@@ -21,6 +21,7 @@ fn module_fuel_all(mass: i32) -> i32 {
     }
 }
 
+#[allow(dead_code)]
 fn exec_day1() {
     println!("##### Day 1: The Tyranny of the Rocket Equation");
 
@@ -66,6 +67,7 @@ fn read_file_to_vector(input_file_name: &str) -> Vec<i32> {
     final_vector
 }
 
+#[allow(dead_code)]
 fn exec_day2() {
     println!("\n##### Day 2");
 
@@ -82,6 +84,29 @@ fn exec_day2() {
     let intcode_value = computer.run_program(day2_program, 0);
 
     println!(">>>> Final value:{}", intcode_value);
+
+    println!("##### Part 2");
+
+    let day2_original: Vec<i32> = read_file_to_vector("input/day2_input.txt");
+    let mut program_output: i32;
+    let mut noun_final: i32 = 0;
+    let mut verb_final: i32 = 0;
+    'outer: for noun in 0..=99 {
+        for verb in 0..=99 {
+            let mut day2_program_test = day2_original.clone();
+            day2_program_test[1] = noun;
+            day2_program_test[2] = verb;
+            program_output = computer.run_program(day2_program_test, 0);
+
+            if program_output == 19690720 {
+                noun_final = noun;
+                verb_final = verb;
+                break 'outer;
+            }
+        }
+    }
+
+    println!(">>>>> noun:{} | verb:{} | answer:{}", noun_final, verb_final, 100 * noun_final + verb_final);
 }
 
 fn main() {
