@@ -1,5 +1,6 @@
 use std::io::{BufReader, BufRead};
 use std::fs::File;
+use std::collections::HashMap;
 
 mod intcode_computer;
 
@@ -109,9 +110,95 @@ fn exec_day2() {
     println!(">>>>> noun:{} | verb:{} | answer:{}", noun_final, verb_final, 100 * noun_final + verb_final);
 }
 
+fn number_to_vec(n: u32) -> Vec<u32> {
+    n.to_string().chars().map(|c| c.to_digit(10).unwrap()).collect()
+}
+
+fn is_password_viable_part1(password: u32) -> bool {
+    let password_vec = number_to_vec(password);
+    let mut password_sorted = password_vec.clone();
+
+    // If the sorted password and the original password are the same, then the numbers are all in
+    // ascending order, thus passing the first test
+    password_sorted.sort();
+
+    let mut is_viable: bool = false;
+    if password_vec == password_sorted {
+        let mut previous_digit: u32 = 0;
+        for digit in password_vec {
+            if digit == previous_digit {
+                is_viable = true;
+                break;
+            }
+
+            previous_digit = digit;
+        }
+    }
+
+    return is_viable;
+}
+
+fn is_password_viable_part2(password: u32) -> bool {
+    let password_vec = number_to_vec(password);
+    let mut password_sorted = password_vec.clone();
+
+    // If the sorted password and the original password are the same, then the numbers are all in
+    // ascending order, thus passing the first test
+    password_sorted.sort();
+
+    let mut is_viable: bool = false;
+    if password_vec == password_sorted {
+        // Create a hashmap of digits and the number of times that digit is seen
+        let mut digit_map: HashMap<u32, u32> = HashMap::new();
+        for digit in password_vec {
+            let digit_counter = digit_map.entry(digit).or_insert(0);
+            *digit_counter += 1;
+        }
+
+        for count in digit_map.values() {
+            // If even a single digit has a count of 2, then the whole password is viable (after
+            // passing the sort test)
+            if *count == 2u32 {
+                is_viable = true;
+                break;
+            }
+        }
+    }
+
+    return is_viable;
+}
+
+fn exec_day4() {
+    println!("##### Day 4 Part 1");
+    let mut viable_passwords = 0u32;
+    for password in 372_304..847_060 {
+        let is_viable = is_password_viable_part1(password);
+
+        if is_viable {
+            viable_passwords = viable_passwords + 1;
+        }
+    }
+
+    println!(">>>> Number of viable passwords:{}", viable_passwords);
+
+    println!("##### Day 4 Part 2");
+    viable_passwords = 0;
+
+    for password in 372_304..847_060 {
+        let is_viable = is_password_viable_part2(password);
+
+        if is_viable {
+            viable_passwords = viable_passwords + 1;
+        }
+    }
+    println!(">>>> Number of viable passwords:{}", viable_passwords);
+}
+
 fn main() {
-    exec_day1();
-    exec_day2();
+    //exec_day1();
+    //exec_day2();
+
+    exec_day4();
 }
 
 #[cfg(test)]
