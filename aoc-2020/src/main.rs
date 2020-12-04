@@ -1,6 +1,7 @@
 use std::fs::File;
 use std::io::{self, BufRead};
 
+#[allow(dead_code)]
 fn day1() {
 
     println!("--- Day 1: Report Repair ---");
@@ -44,6 +45,7 @@ fn day1() {
     println!("----------------------------");
 }
 
+#[allow(dead_code)]
 fn day2_part1() {
     println!("--- Day 2: Password Philosophy ---");
     println!("--- Part 1                     ---\n");
@@ -86,6 +88,7 @@ fn day2_part1() {
     println!("Number of valid passwords: {}", valid_count);
 }
 
+#[allow(dead_code)]
 fn day2_part2() {
     println!("--- Part 2                     ---\n");
 
@@ -126,6 +129,85 @@ fn day2_part2() {
     println!("Number of valid passwords: {}", valid_count);
 }
 
+#[allow(dead_code)]
+fn day3() {
+    println!("--- Day 3: Toboggan Trajectory ---");
+    println!("--- Part 1                     ---\n");
+
+    let input_path = "input_data/day3_input.txt";
+    let reader = io::BufReader::new(File::open(input_path).unwrap());
+    let landscape: Vec<String> = reader.lines().map(|l| l.expect("Failed to read input line")).collect();
+
+    let tree = '#';
+    let _open = '.';
+
+    let right_movement = 3;
+    let down_movement = 1;
+    let mut current_x = 0;
+    let mut tree_total = 0;
+
+    // Skip the starting N lines as they are not used
+    for land_line in landscape.iter().skip(down_movement).step_by(down_movement) {
+        current_x += right_movement;
+
+        if current_x >= land_line.chars().count() {
+            current_x -= land_line.chars().count();
+        }
+
+        if land_line.chars().nth(current_x).unwrap() == tree {
+            tree_total += 1;
+        }
+    }
+
+    println!("Total trees hit: {}", tree_total);
+}
+
+fn day3_part2() {
+    println!("--- Day 3: Toboggan Trajectory ---");
+    println!("--- Part 2                     ---\n");
+
+    let input_path = "input_data/day3_input.txt";
+    let reader = io::BufReader::new(File::open(input_path).unwrap());
+    let landscape: Vec<String> = reader.lines().map(|l| l.expect("Failed to read input line")).collect();
+
+    let tree = '#';
+    let _open = '.';
+
+    let movements: Vec<(usize, usize)> = vec![
+        (1, 1),
+        (3, 1),
+        (5, 1),
+        (7, 1),
+        (1, 2),
+    ];
+
+    let mut tree_product:i64 = 1;
+    for move_instruction in movements {
+        let right_movement = move_instruction.0;
+        let down_movement = move_instruction.1;
+
+        let mut current_x = 0;
+        let mut tree_total = 0;
+
+        // Skip the starting N lines as they are not used
+        for land_line in landscape.iter().skip(down_movement).step_by(down_movement) {
+            current_x += right_movement;
+
+            if current_x >= land_line.chars().count() {
+                current_x -= land_line.chars().count();
+            }
+
+            if land_line.chars().nth(current_x).unwrap() == tree {
+                tree_total += 1;
+            }
+        }
+
+        tree_product *= tree_total;
+    }
+
+    println!("Tree product: {}", tree_product);
+}
+
 fn main() {
     println!("         .     .  .      +     .      .          .");
     println!("     .       .      .     #       .           .");
@@ -145,7 +227,9 @@ fn main() {
     println!(".. .. ..................O000O........................ ...... ...");
     println!("... .. .......... Advent of Code 2020 ................... ... ..");
 
-    day1();
-    day2_part1();
-    day2_part2();
+    // day1();
+    // day2_part1();
+    // day2_part2();
+    //day3();
+    day3_part2();
 }
