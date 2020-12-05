@@ -1,5 +1,10 @@
+#[macro_use] extern crate lazy_static;
+extern crate regex;
+
 use std::fs::File;
 use std::io::{self, BufRead};
+use std::collections::HashMap;
+use regex::Regex;
 
 #[allow(dead_code)]
 fn day1() {
@@ -162,6 +167,7 @@ fn day3() {
     println!("Total trees hit: {}", tree_total);
 }
 
+#[allow(dead_code)]
 fn day3_part2() {
     println!("--- Day 3: Toboggan Trajectory ---");
     println!("--- Part 2                     ---\n");
@@ -208,6 +214,152 @@ fn day3_part2() {
     println!("Tree product: {}", tree_product);
 }
 
+fn day4_part1_is_valid_passport(passport: Vec<&str>) -> bool {
+    let number_of_required_fields: usize = 7;
+
+    let mut tags: HashMap<&str, bool>= HashMap::new();
+    for pair in passport {
+        let key_value_vec: Vec<&str> = pair.split(":").collect();
+        tags.entry(key_value_vec[0]).or_insert(true);
+    }
+
+    // Valid passports may or may not have the "cid" field, so we don't care if it exists
+    // Since all the other fields are required, all 7 of them must exist
+    return number_of_required_fields == tags.iter().filter(|&(key, value)| *key != "cid" && *value == true).count()
+}
+
+fn is_valid_height(value: &str) -> bool {
+    // unit check
+    if value.len() >= 2 {
+        if value.ends_with("in") {
+            let height: i32 = value.trim_end_matches("in").parse().unwrap();
+            height >= 59 && height <= 76
+        } else if value.ends_with("cm") {
+            let height: i32 = value.trim_end_matches("cm").parse().unwrap();
+            height >= 150 && height <= 193
+        } else {
+            false
+        }
+    } else {
+        false
+    }
+}
+
+fn is_valid_hair_color(value: &str) -> bool {
+    lazy_static! {
+        static ref RE: Regex = Regex::new("^#[0-9a-f]{6}$").unwrap();
+    }
+
+    RE.is_match(value)
+}
+
+fn is_valid_eye_color(value: &str) -> bool {
+    lazy_static! {
+        static ref RE: Regex = Regex::new("^(amb)|(blu)|(brn)|(gry)|(grn)|(hzl)|(oth)$").unwrap();
+    }
+
+    RE.is_match(value)
+}
+
+fn day4_part2_is_field_valid(field_name: &str, value: &str) ->bool {
+    // byr (Birth Year)
+    // iyr (Issue Year)
+    // eyr (Expiration Year)
+    // hgt (Height)
+    // hcl (Hair Color)
+    // ecl (Eye Color)
+    // pid (Passport ID)
+    // cid (Country ID)
+    return match field_name {
+        "byr" => value.parse::<i32>().unwrap() >= 1920 && value.parse::<i32>().unwrap() <= 2002,
+        "iyr" => value.parse::<i32>().unwrap() >= 2010 && value.parse::<i32>().unwrap() <= 2020,
+        "eyr" => value.parse::<i32>().unwrap() >= 2020 && value.parse::<i32>().unwrap() <= 2030,
+        "hgt" => is_valid_height(value),
+        "hcl" => is_valid_hair_color(value),
+        "ecl" => is_valid_eye_color(value),
+        "pid" => value.chars().filter(|the_char| the_char.is_digit(10)).count() == 9,
+        "cid" => true,
+
+        // No other values are valid
+        _ => false,
+    }
+}
+
+fn day4_part2_is_valid_passport(passport: Vec<&str>) -> bool {
+    let number_of_required_fields: usize = 7;
+
+    let mut tags: HashMap<&str, bool>= HashMap::new();
+    for pair in passport {
+        let key_value_vec: Vec<&str> = pair.split(":").collect();
+        let key = key_value_vec[0];
+        let value = key_value_vec[1];
+
+        if day4_part2_is_field_valid(key, value) {
+            tags.entry(key).or_insert(true);
+        }
+    }
+
+    // Valid passports may or may not have the "cid" field, so we don't care if it exists
+    // Since all the other fields are required, all 7 of them must exist
+    return number_of_required_fields == tags.iter().filter(|&(key, value)| *key != "cid" && *value == true).count()
+}
+
+fn day4() {
+    println!("--- Day 4: Passport Processing ---");
+    println!("--- Part 1                     ---\n");
+
+    // byr (Birth Year)
+    // iyr (Issue Year)
+    // eyr (Expiration Year)
+    // hgt (Height)
+    // hcl (Hair Color)
+    // ecl (Eye Color)
+    // pid (Passport ID)
+    // cid (Country ID)
+
+    let input_path = "input_data/day4_input.txt";
+    let reader = io::BufReader::new(File::open(input_path).unwrap());
+    let passports_unparsed: Vec<String> = reader.lines().map(|l| l.expect("Failed to read input line")).collect();
+
+    let mut passport_list: Vec<Vec<&str>> = vec![];
+    let mut passport: Vec<&str> = vec![];
+
+    // Loop to read through the input and parse it into a vector of passports
+    for line in &passports_unparsed {
+        let line_tokens: Vec<&str> = line.split_whitespace().collect();
+
+        if line_tokens.len() == 0 {
+            // Once there is a blank line, store the current working passport and then clear it to
+            // start on the next one
+            passport_list.push(passport.clone());
+            passport.clear();
+        } else {
+            passport.extend(line_tokens);
+        }
+    }
+
+    println!("Number of passports: {}", passport_list.len());
+
+    let passport_list_part2 = passport_list.clone();
+
+    let mut valid_passport_count_part1 = 0;
+    for passport in passport_list {
+        if day4_part1_is_valid_passport(passport) {
+            valid_passport_count_part1 += 1;
+        }
+    }
+
+    let mut valid_passport_count_part2 = 0;
+    for passport in passport_list_part2 {
+        if day4_part2_is_valid_passport(passport) {
+            valid_passport_count_part2 += 1;
+        }
+    }
+
+    println!("Number of valid passports (part 1): {}", valid_passport_count_part1);
+    println!("Number of valid passports (part 2): {}", valid_passport_count_part2);
+}
+
 fn main() {
     println!("         .     .  .      +     .      .          .");
     println!("     .       .      .     #       .           .");
@@ -231,5 +383,6 @@ fn main() {
     // day2_part1();
     // day2_part2();
     //day3();
-    day3_part2();
+    //day3_part2();
+    day4();
 }
