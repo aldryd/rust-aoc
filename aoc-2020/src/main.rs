@@ -5,7 +5,6 @@ use std::fs::File;
 use std::io::{self, BufRead};
 use std::collections::HashMap;
 use regex::Regex;
-use crate::BinaryChoice::{Left, Right};
 use std::cmp;
 
 #[allow(dead_code)]
@@ -375,26 +374,6 @@ fn day4() {
     assert_eq!(valid_passport_count_part2, 160);
 }
 
-enum BinaryChoice {
-    Left,
-    Right,
-}
-
-fn bisect_list(the_list: &Vec<i32>, side: BinaryChoice) -> Vec<i32> {
-    let mut new_start:usize = 0;
-    let mut new_end:usize = the_list.len();
-    match side {
-        Left => {
-            new_end = the_list.len() / 2;
-        },
-        Right => {
-            new_start = the_list.len() / 2;
-        },
-    }
-
-    the_list[new_start..new_end].to_vec()
-}
-
 fn day5() {
     println!("--- Day 5: Binary Boarding ---\n");
 
@@ -402,54 +381,29 @@ fn day5() {
     let reader = io::BufReader::new(File::open(input_path).unwrap());
     let all_seats: Vec<String> = reader.lines().map(|l| l.expect("Failed to read input line")).collect();
 
-    let row_list: Vec<i32> = (0..128).collect();
-    let column_list: Vec<i32> = (0..8).collect();
-
     let mut min_seat_id: i32 = i32::MAX;
     let mut max_seat_id: i32 = 0;
 
     let mut assigned_seat_list: Vec<i32> = vec![];
 
+    // Each seat ID in the list can be represented as a 10 bit value where:
+    // F and L are 0
+    // B and R are 1
+    // For example, the seat FBFBFFBRRR is 0101001111 which is 335
+
     for seat in all_seats {
-        let mut working_row_list = row_list.clone();
-        let mut working_column_list = column_list.clone();
-
-        // The first 7 characters will be the F/B designation and the last 3 will be L/R
-        let seat_split = seat.split_at(7);
-        for row_designation in seat_split.0.chars() {
-            let choice: BinaryChoice = match row_designation {
-                'B' => Right,
-                'F' => Left,
-                _ => Left,
-            };
-
-            working_row_list = bisect_list(&working_row_list, choice);
+        let mut seat_bits: u16 = 0;
+        for designation in seat.chars() {
+            seat_bits <<= 1;
+            if designation == 'B' || designation == 'R' {
+                seat_bits |= 1;
+            }
         }
 
-        assert_eq!(working_row_list.len(), 1, "working_row_list should end with 1 item");
-        //println!("Row: {}", working_row_list.first().unwrap());
+        assigned_seat_list.push(seat_bits as i32);
 
-        for column_designation in seat_split.1.chars() {
-            let choice: BinaryChoice = match column_designation {
-                'L' => Left,
-                'R' => Right,
-                _ => Left,
-            };
-
-            working_column_list = bisect_list(&working_column_list, choice);
-        }
-
-        assert_eq!(working_column_list.len(), 1, "working_column_list should end with 1 item");
-        //println!("Column: {}", working_column_list.first().unwrap());
-
-        let row = working_row_list.first().unwrap();
-        let column = working_column_list.first().unwrap();
-
-        let calculated_seat_id = (row * 8) + column;
-        assigned_seat_list.push(calculated_seat_id);
-
-        min_seat_id = cmp::min(calculated_seat_id, min_seat_id);
-        max_seat_id = cmp::max(calculated_seat_id, max_seat_id);
+        min_seat_id = cmp::min(seat_bits as i32, min_seat_id);
+        max_seat_id = cmp::max(seat_bits as i32, max_seat_id);
     }
 
     // Include asserts for the right answers in case I decide to tweak the solutions later
