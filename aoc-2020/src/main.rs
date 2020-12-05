@@ -5,6 +5,8 @@ use std::fs::File;
 use std::io::{self, BufRead};
 use std::collections::HashMap;
 use regex::Regex;
+use crate::BinaryChoice::{Left, Right};
+use std::cmp;
 
 #[allow(dead_code)]
 fn day1() {
@@ -214,6 +216,7 @@ fn day3_part2() {
     println!("Tree product: {}", tree_product);
 }
 
+#[allow(dead_code)]
 fn day4_part1_is_valid_passport(passport: Vec<&str>) -> bool {
     let number_of_required_fields: usize = 7;
 
@@ -228,6 +231,7 @@ fn day4_part1_is_valid_passport(passport: Vec<&str>) -> bool {
     return number_of_required_fields == tags.iter().filter(|&(key, value)| *key != "cid" && *value == true).count()
 }
 
+#[allow(dead_code)]
 fn is_valid_height(value: &str) -> bool {
     // unit check
     if value.len() >= 2 {
@@ -245,6 +249,7 @@ fn is_valid_height(value: &str) -> bool {
     }
 }
 
+#[allow(dead_code)]
 fn is_valid_hair_color(value: &str) -> bool {
     lazy_static! {
         static ref RE: Regex = Regex::new("^#[0-9a-f]{6}$").unwrap();
@@ -253,6 +258,7 @@ fn is_valid_hair_color(value: &str) -> bool {
     RE.is_match(value)
 }
 
+#[allow(dead_code)]
 fn is_valid_eye_color(value: &str) -> bool {
     lazy_static! {
         static ref RE: Regex = Regex::new("^(amb)|(blu)|(brn)|(gry)|(grn)|(hzl)|(oth)$").unwrap();
@@ -261,6 +267,7 @@ fn is_valid_eye_color(value: &str) -> bool {
     RE.is_match(value)
 }
 
+#[allow(dead_code)]
 fn day4_part2_is_field_valid(field_name: &str, value: &str) ->bool {
     // byr (Birth Year)
     // iyr (Issue Year)
@@ -278,13 +285,16 @@ fn day4_part2_is_field_valid(field_name: &str, value: &str) ->bool {
         "hcl" => is_valid_hair_color(value),
         "ecl" => is_valid_eye_color(value),
         "pid" => value.chars().filter(|the_char| the_char.is_digit(10)).count() == 9,
-        "cid" => true,
+
+        // The cid field is optional so ignore it
+        //"cid" => true,
 
         // No other values are valid
         _ => false,
     }
 }
 
+#[allow(dead_code)]
 fn day4_part2_is_valid_passport(passport: Vec<&str>) -> bool {
     let number_of_required_fields: usize = 7;
 
@@ -304,6 +314,7 @@ fn day4_part2_is_valid_passport(passport: Vec<&str>) -> bool {
     return number_of_required_fields == tags.iter().filter(|&(key, value)| *key != "cid" && *value == true).count()
 }
 
+#[allow(dead_code)]
 fn day4() {
     println!("--- Day 4: Passport Processing ---");
     println!("--- Part 1                     ---\n");
@@ -358,6 +369,106 @@ fn day4() {
 
     println!("Number of valid passports (part 1): {}", valid_passport_count_part1);
     println!("Number of valid passports (part 2): {}", valid_passport_count_part2);
+
+    // Include asserts for the right answers in case I decide to tweak the solutions later
+    assert_eq!(valid_passport_count_part1, 226);
+    assert_eq!(valid_passport_count_part2, 160);
+}
+
+enum BinaryChoice {
+    Left,
+    Right,
+}
+
+fn bisect_list(the_list: &Vec<i32>, side: BinaryChoice) -> Vec<i32> {
+    let mut new_start:usize = 0;
+    let mut new_end:usize = the_list.len();
+    match side {
+        Left => {
+            new_end = the_list.len() / 2;
+        },
+        Right => {
+            new_start = the_list.len() / 2;
+        },
+    }
+
+    the_list[new_start..new_end].to_vec()
+}
+
+fn day5() {
+    println!("--- Day 5: Binary Boarding ---\n");
+
+    let input_path = "input_data/day5_input.txt";
+    let reader = io::BufReader::new(File::open(input_path).unwrap());
+    let all_seats: Vec<String> = reader.lines().map(|l| l.expect("Failed to read input line")).collect();
+
+    let row_list: Vec<i32> = (0..128).collect();
+    let column_list: Vec<i32> = (0..8).collect();
+
+    let mut min_seat_id: i32 = i32::MAX;
+    let mut max_seat_id: i32 = 0;
+
+    let mut assigned_seat_list: Vec<i32> = vec![];
+
+    for seat in all_seats {
+        let mut working_row_list = row_list.clone();
+        let mut working_column_list = column_list.clone();
+
+        // The first 7 characters will be the F/B designation and the last 3 will be L/R
+        let seat_split = seat.split_at(7);
+        for row_designation in seat_split.0.chars() {
+            let choice: BinaryChoice = match row_designation {
+                'B' => Right,
+                'F' => Left,
+                _ => Left,
+            };
+
+            working_row_list = bisect_list(&working_row_list, choice);
+        }
+
+        assert_eq!(working_row_list.len(), 1, "working_row_list should end with 1 item");
+        //println!("Row: {}", working_row_list.first().unwrap());
+
+        for column_designation in seat_split.1.chars() {
+            let choice: BinaryChoice = match column_designation {
+                'L' => Left,
+                'R' => Right,
+                _ => Left,
+            };
+
+            working_column_list = bisect_list(&working_column_list, choice);
+        }
+
+        assert_eq!(working_column_list.len(), 1, "working_column_list should end with 1 item");
+        //println!("Column: {}", working_column_list.first().unwrap());
+
+        let row = working_row_list.first().unwrap();
+        let column = working_column_list.first().unwrap();
+
+        let calculated_seat_id = (row * 8) + column;
+        assigned_seat_list.push(calculated_seat_id);
+
+        min_seat_id = cmp::min(calculated_seat_id, min_seat_id);
+        max_seat_id = cmp::max(calculated_seat_id, max_seat_id);
+    }
+
+    // Include asserts for the right answers in case I decide to tweak the solutions later
+    assert_eq!(max_seat_id, 915);
+    println!("Highest seat ID: {}", max_seat_id);
+
+    // Binary search through the assigned seats to find the missing one
+    assigned_seat_list.sort();
+    for seat_id_check in min_seat_id..max_seat_id {
+        let result = assigned_seat_list.binary_search(&seat_id_check);
+        if result.is_err() {
+            // This is my seat!
+            println!("My seat ID is: {}", seat_id_check);
+
+            // Include asserts for the right answers in case I decide to tweak the solutions later
+            assert_eq!(seat_id_check, 699);
+            break;
+        }
+    }
 }
 
 fn main() {
@@ -384,5 +495,6 @@ fn main() {
     // day2_part2();
     //day3();
     //day3_part2();
-    day4();
+    //day4();
+    day5();
 }
