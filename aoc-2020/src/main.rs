@@ -3,7 +3,7 @@ extern crate regex;
 
 use std::fs::File;
 use std::io::{self, BufRead};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use regex::Regex;
 use std::cmp;
 
@@ -374,6 +374,7 @@ fn day4() {
     assert_eq!(valid_passport_count_part2, 160);
 }
 
+#[allow(dead_code)]
 fn day5() {
     println!("--- Day 5: Binary Boarding ---\n");
 
@@ -425,6 +426,75 @@ fn day5() {
     }
 }
 
+#[allow(dead_code)]
+fn day6() {
+    println!("--- Day 6: Custom Customs ---");
+    println!("--- Part 1                ---");
+
+    let input_path = "input_data/day6_input.txt";
+    let reader = io::BufReader::new(File::open(input_path).unwrap());
+    let customs_answers_unparsed: Vec<String> = reader.lines().map(|l| l.expect("Failed to read input line")).collect();
+
+    let mut answer_list: Vec<HashSet<char>> = vec![];
+    let mut group_answer: HashSet<char> = HashSet::new();
+
+    // Loop to read through the input and parse it into a vector of group_answer
+    for line in &customs_answers_unparsed {
+        let line_tokens: String = line.split_whitespace().collect();
+
+        if line_tokens.is_empty() {
+            // Once there is a blank line, store the current working answer group and then clear it to
+            // start on the next one
+            answer_list.push(group_answer.clone());
+            group_answer.clear();
+        } else {
+            for letter in line_tokens.chars() {
+                group_answer.insert(letter);
+            }
+        }
+    }
+
+    let mut answer_sum = 0;
+    for group_answer in answer_list {
+        answer_sum += group_answer.len();
+    }
+
+    println!("Sum of answers: {}", answer_sum);
+}
+
+fn day6_part2() {
+    println!("--- Day 6: Custom Customs ---");
+    println!("--- Part 2                ---");
+
+    let input_path = "input_data/day6_input.txt";
+    let all_group_answers: Vec<String> = std::fs::read_to_string(input_path).unwrap()
+        .split("\n\n")
+        .map(|group| group.to_string())
+        .collect();
+
+    let possible_answers = "abcdefghijklmnopqrstuvwxyz";
+
+    let mut answer_sum: usize = 0;
+    for group_answers in all_group_answers {
+
+        // Iterate over all the possible answers and count how many times they show up in the
+        // group's answers. If they show up the same number of times as the number of people in
+        // the group, that counts toward the sum.
+        let result = possible_answers.chars()
+            .map(|character| (character, group_answers.matches(character).count()))
+            .collect::<std::collections::HashMap<_, _>>();
+
+        let number_of_people = group_answers.split("\n").count();
+
+        answer_sum += result.values()
+            .filter(|&value| *value == number_of_people)
+            .count();
+    }
+
+    println!("Sum of answers: {}", answer_sum);
+    assert_eq!(answer_sum, 3435);
+}
+
 fn main() {
     println!("         .     .  .      +     .      .          .");
     println!("     .       .      .     #       .           .");
@@ -450,5 +520,7 @@ fn main() {
     //day3();
     //day3_part2();
     //day4();
-    day5();
+    //day5();
+    //day6();
+    day6_part2();
 }
