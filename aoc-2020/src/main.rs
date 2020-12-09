@@ -496,6 +496,7 @@ fn day6_part2() {
     assert_eq!(answer_sum, 3435);
 }
 
+#[allow(dead_code)]
 fn search_for_bag(bag: &str, total_list: &HashMap<String, HashMap<String, usize>>, bag_node_list: &HashMap<String, usize>) -> bool {
     // If the bag node contains the bag search string, then return right away since it was found.
     // No need to search deeper.
@@ -517,6 +518,7 @@ fn search_for_bag(bag: &str, total_list: &HashMap<String, HashMap<String, usize>
     false
 }
 
+#[allow(dead_code)]
 fn count_bags_in_bag(total_list: &HashMap<String, HashMap<String, usize>>, bag_node_list: &HashMap<String, usize>) -> usize {
     let mut bag_sum: usize = 0;
     for bag_node in bag_node_list {
@@ -527,6 +529,7 @@ fn count_bags_in_bag(total_list: &HashMap<String, HashMap<String, usize>>, bag_n
     bag_sum
 }
 
+#[allow(dead_code)]
 fn day7() {
     println!("--- Day 7: Handy Haversacks ---\n");
 
@@ -579,6 +582,80 @@ fn day7() {
     assert_eq!(bag_sum, 12414);
 }
 
+fn test_bootcode(bootcode: &Vec<String>) -> (bool, i32) {
+    let mut accumlator = 0;
+    let mut instruction_pointer: i32 = 0;
+    let mut instruction_tracker: HashSet<i32> = HashSet::new();
+
+    while instruction_pointer < bootcode.len() as i32 {
+        let instruction = bootcode.get(instruction_pointer as usize).unwrap();
+        if instruction_tracker.insert(instruction_pointer) == false {
+            break;
+        }
+        match instruction.split(" ").nth(0).unwrap() {
+            "acc" => {
+                accumlator += instruction.split(" ").nth(1).unwrap().parse::<i32>().unwrap();
+                instruction_pointer += 1;
+            },
+            "jmp" => {
+                instruction_pointer += instruction.split(" ").nth(1).unwrap().parse::<i32>().unwrap();
+            }
+            _ => instruction_pointer += 1,
+        }
+    }
+
+    if instruction_pointer >= bootcode.len() as i32 {
+        return (true, accumlator)
+    } else {
+        return (false, accumlator)
+    }
+}
+
+#[allow(dead_code)]
+fn day8() {
+    println!("--- Day 8: Handheld Halting ---\n");
+    let input_path = "input_data/day8_input.txt";
+    let reader = io::BufReader::new(File::open(input_path).unwrap());
+    let bootcode: Vec<String> = reader.lines().map(|l| l.expect("Failed to read input line")).collect();
+
+    let result = test_bootcode(&bootcode);
+
+    assert_eq!(result.1, 1331);
+    println!("Final accumulator value: {}", result.1);
+}
+
+fn day8_part2() {
+    println!("--- Day 8: Handheld Halting ---");
+    println!("--- Part 2                  ---\n");
+    let input_path = "input_data/day8_input.txt";
+    let reader = io::BufReader::new(File::open(input_path).unwrap());
+    let bootcode: Vec<String> = reader.lines().map(|l| l.expect("Failed to read input line")).collect();
+
+    for (ii, instruction) in bootcode.iter().enumerate() {
+        // @TODO: Is there a better way to swap these instructions?
+        let mut new_instruction: &str = "";
+        match instruction.split(" ").nth(0).unwrap() {
+            "nop" => new_instruction = "jmp",
+            "jmp" => new_instruction = "nop",
+
+            // For all other cases, skip this iteration since it doesn't change the behavior of
+            // the bootcode
+            _ => continue,
+        }
+
+        // Try swapping the nop/jmp command and running the code. If it completes successfully,
+        // then that's the value we're looking for.
+        let mut bootcode_to_test = bootcode.clone();
+        bootcode_to_test[ii] = format!("{} {}", new_instruction.to_string(), instruction.split(" ").nth(1).unwrap());
+
+        let result = test_bootcode(&bootcode_to_test);
+        if result.0 {
+            assert_eq!(result.1, 1121);
+            println!(">>>> Accumulator result: {}", result.1);
+        }
+    }
+}
+
 fn main() {
     println!("         .     .  .      +     .      .          .");
     println!("     .       .      .     #       .           .");
@@ -607,5 +684,7 @@ fn main() {
     //day5();
     //day6();
     //day6_part2();
-    day7();
+    //day7();
+    //day8();
+    day8_part2();
 }
