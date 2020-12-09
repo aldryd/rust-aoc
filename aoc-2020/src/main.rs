@@ -462,6 +462,7 @@ fn day6() {
     println!("Sum of answers: {}", answer_sum);
 }
 
+#[allow(dead_code)]
 fn day6_part2() {
     println!("--- Day 6: Custom Customs ---");
     println!("--- Part 2                ---");
@@ -495,6 +496,89 @@ fn day6_part2() {
     assert_eq!(answer_sum, 3435);
 }
 
+fn search_for_bag(bag: &str, total_list: &HashMap<String, HashMap<String, usize>>, bag_node_list: &HashMap<String, usize>) -> bool {
+    // If the bag node contains the bag search string, then return right away since it was found.
+    // No need to search deeper.
+    if bag_node_list.contains_key(bag) {
+        return true
+    }
+
+    for bag_node in bag_node_list {
+        let inner_bag_node_list = total_list.get(bag_node.0).unwrap();
+
+        if inner_bag_node_list.is_empty() == false {
+            if inner_bag_node_list.contains_key(bag) || search_for_bag(bag, &total_list, &inner_bag_node_list) {
+                // Found the bag so return from here
+                return true
+            }
+        }
+    }
+
+    false
+}
+
+fn count_bags_in_bag(total_list: &HashMap<String, HashMap<String, usize>>, bag_node_list: &HashMap<String, usize>) -> usize {
+    let mut bag_sum: usize = 0;
+    for bag_node in bag_node_list {
+        bag_sum += bag_node.1;
+        bag_sum += bag_node.1 * count_bags_in_bag(&total_list, total_list.get(bag_node.0).unwrap());
+    }
+
+    bag_sum
+}
+
+fn day7() {
+    println!("--- Day 7: Handy Haversacks ---\n");
+
+    type Bag = HashMap<String, HashMap<String, usize>>;
+
+    let input_path = "input_data/day7_input.txt";
+    let reader = io::BufReader::new(File::open(input_path).unwrap());
+    let bag_rules_list: Vec<String> = reader.lines().map(|l| l.expect("Failed to read input line")).collect();
+
+    let mut parsed_bag_rule_list: Bag = HashMap::new();
+
+    for bag_rule in bag_rules_list {
+        let mut rule_iter = bag_rule.split(" bags contain ");
+        let bag_type: String = rule_iter.next().unwrap().to_string();
+
+        lazy_static! {
+            static ref RE: Regex = Regex::new(" bag[s]?[,.][ ]?").expect("");
+        }
+        let rules: Vec<&str> = RE.split(rule_iter.next().unwrap()).into_iter().collect();
+
+        let ruleset: HashMap<String, usize> = rules.iter()
+            .filter(|&rule| rule.is_empty() == false && *rule != "no other")
+            .map(|&rule| {
+                let count_str = rule.split(" ").next().unwrap();
+                let count = count_str.parse::<usize>().unwrap_or_default();
+
+                // Use the count to construct a delimiter for splitting the bag type from the count
+                let count_split_pattern = format!("{} ", count_str);
+                let bag = rule.split(&count_split_pattern).nth(1).unwrap_or_default();
+
+                (bag.to_string(), count)
+            })
+            .collect::<HashMap<_, _>>();
+
+        parsed_bag_rule_list.insert(bag_type, ruleset);
+    }
+
+    let bag_count = parsed_bag_rule_list.values()
+        .into_iter()
+        .filter(|&bag_node| {
+            search_for_bag("shiny gold", &parsed_bag_rule_list, bag_node) == true
+        })
+        .count();
+
+    assert_eq!(bag_count, 211);
+    println!("Bag count: {}", bag_count);
+
+    let bag_sum = count_bags_in_bag(&parsed_bag_rule_list, &parsed_bag_rule_list.get("shiny gold").unwrap());
+    println!("Bag sum: {}", bag_sum);
+    assert_eq!(bag_sum, 12414);
+}
+
 fn main() {
     println!("         .     .  .      +     .      .          .");
     println!("     .       .      .     #       .           .");
@@ -522,5 +606,6 @@ fn main() {
     //day4();
     //day5();
     //day6();
-    day6_part2();
+    //day6_part2();
+    day7();
 }
