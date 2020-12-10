@@ -624,6 +624,7 @@ fn day8() {
     println!("Final accumulator value: {}", result.1);
 }
 
+#[allow(dead_code)]
 fn day8_part2() {
     println!("--- Day 8: Handheld Halting ---");
     println!("--- Part 2                  ---\n");
@@ -633,7 +634,7 @@ fn day8_part2() {
 
     for (ii, instruction) in bootcode.iter().enumerate() {
         // @TODO: Is there a better way to swap these instructions?
-        let mut new_instruction: &str = "";
+        let new_instruction: &str;
         match instruction.split(" ").nth(0).unwrap() {
             "nop" => new_instruction = "jmp",
             "jmp" => new_instruction = "nop",
@@ -652,6 +653,69 @@ fn day8_part2() {
         if result.0 {
             assert_eq!(result.1, 1121);
             println!(">>>> Accumulator result: {}", result.1);
+        }
+    }
+}
+
+fn find_two_values_for_sum(slice: &[u32], sum: u32) -> bool {
+    let mut result = false;
+    'outer: for value1 in slice {
+        for value2 in slice {
+            if value1 + value2 == sum {
+                //println!("value check: {} | {}", expense1, expense2);
+                result = true;
+                break 'outer
+            }
+        }
+    }
+
+    result
+}
+
+fn day9() {
+    println!("--- Day 9: Encoding Error ---\n");
+    let input_path = "input_data/day9_input.txt";
+    let reader = io::BufReader::new(File::open(input_path).unwrap());
+    let xmas_series: Vec<u32> = reader.lines().flatten().flat_map(|l| l.parse()).collect();
+
+    const PREAMBLE_LENGTH: usize = 25;
+
+    let mut rule_breaker: u32 = 0;
+    for (index, value) in xmas_series.iter().enumerate() {
+        if index < PREAMBLE_LENGTH {
+            continue
+        }
+
+        let slice = &xmas_series[index - PREAMBLE_LENGTH..index];
+
+        if find_two_values_for_sum(slice, *value) == false {
+            assert_eq!(*value, 25918798);
+            println!("Rule breaker value: {}", *value);
+            rule_breaker = *value;
+            break;
+        }
+    }
+
+    let mut start_index = 0;
+    let mut end_index = 2;
+
+    while end_index < xmas_series.len() {
+        let slice: &[u32] = &xmas_series[start_index..end_index];
+        let sum: u32 = slice.iter().fold(0, |sum, value| sum + value);
+        //println!("{:?} | sum: {}", slice, sum);
+
+        if sum > rule_breaker {
+            start_index += 1;
+            end_index = start_index + 2;
+        } else if sum == rule_breaker {
+            let min = slice.iter().min().unwrap();
+            let max = slice.iter().max().unwrap();
+
+            assert_eq!(min + max, 3340942);
+            println!("min: {} | max: {} | sum: {}", min, max, min + max);
+            break;
+        } else {
+            end_index += 1;
         }
     }
 }
@@ -686,5 +750,6 @@ fn main() {
     //day6_part2();
     //day7();
     //day8();
-    day8_part2();
+    //day8_part2();
+    day9();
 }
