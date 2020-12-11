@@ -672,6 +672,7 @@ fn find_two_values_for_sum(slice: &[u32], sum: u32) -> bool {
     result
 }
 
+#[allow(dead_code)]
 fn day9() {
     println!("--- Day 9: Encoding Error ---\n");
     let input_path = "input_data/day9_input.txt";
@@ -720,6 +721,64 @@ fn day9() {
     }
 }
 
+fn day10() {
+    println!("--- Day 10: Adapter Array ---\n");
+
+    let input_path = "input_data/day10_input.txt";
+
+    let file = File::open(input_path);
+    let reader = io::BufReader::new(file.unwrap());
+    let mut adapter_list: Vec<u32> = reader.lines().flatten().flat_map(|l| l.parse()).collect();
+
+    // 0 is not included in the input data
+    adapter_list.push(0);
+    adapter_list.sort();
+
+    // The final value is always 3 more than the highest value in the vector
+    adapter_list.push(adapter_list.last().unwrap() + 3);
+
+    let differences: Vec<u32> = adapter_list.windows(2)
+        .map(|window| window[1]- window[0])
+        .collect();
+    let count_of_ones = differences.iter()
+        .filter(|&value| *value == 1)
+        .count();
+    let count_of_threes = differences.iter()
+        .filter(|&value| *value == 3)
+        .count();
+
+    assert_eq!(count_of_ones * count_of_threes, 2574);
+    println!("Joltage product: {}", count_of_ones * count_of_threes);
+    
+    let mut sequence_tracker: HashMap<u32, u32> = HashMap::new();
+    let mut sequence_count: u32 = 0;
+    for diff in differences.iter() {
+        match *diff {
+            1 => sequence_count += 1,
+            _ => {
+                // Update or insert the number of times this sequence has been seen
+                (*sequence_tracker.entry(sequence_count).or_insert(0)) += 1;
+                sequence_count = 0;
+            }
+        }
+    }
+
+    // The number of permutations is:
+    // 1^(sequences of 0) * 1^(sequences of 2) * 2^(sequences of 3) * 4^(sequences of 4) * 7^(sequences of 5) * 13^(sequences of 6)
+    //
+    // The first 2 items can be ignored in the math since they always work out to 1; however, it
+    // makes the fold operation a bit easier for grabbing the index to leave them in.
+    let pattern: Vec<u32> = vec![1, 1, 2, 4, 7, 13];
+    let permutations: u128 = pattern.iter()
+        .enumerate()
+        .fold(1, |product, (index, value)| {
+            product * (*value).pow(*sequence_tracker.get(&(index as u32)).unwrap_or(&0)) as u128
+        });
+
+    assert_eq!(permutations, 2_644_613_988_352);
+    println!("Number of permutations: {}", permutations);
+}
+
 fn main() {
     println!("         .     .  .      +     .      .          .");
     println!("     .       .      .     #       .           .");
@@ -751,5 +810,6 @@ fn main() {
     //day7();
     //day8();
     //day8_part2();
-    day9();
+    //day9();
+    day10();
 }
