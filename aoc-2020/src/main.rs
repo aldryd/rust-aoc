@@ -6,7 +6,6 @@ use std::io::{self, BufRead};
 use std::collections::{HashMap, HashSet};
 use regex::Regex;
 use std::cmp;
-use std::cmp::min;
 
 #[allow(dead_code)]
 fn day1() {
@@ -783,36 +782,44 @@ fn day10() {
 
 fn count_occupied_seats(row_index: i32, col_index: i32, nearby: bool, seat_list: &Vec<Vec<char>>) -> u32 {
 
-    let directions: Vec<(i32, i32)> = vec![(-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1)];
+    const DIRECTIONS: [(i32, i32); 8] = [(-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1)];
 
-    for direction in directions {
-        let seat_address = (cmp::max(0, row_index + direction.1), cmp::max(0, col_index + direction.0));
-    }
+    let mut occupied_count = 0;
 
-    let mut start_row: i32 = row_index;
-    let mut start_col: i32 = col_index;
-    let end_row: i32 = min((seat_list.len() - 1) as i32, row_index + 1);
-    let end_col: i32 = min((seat_list[row_index as usize].len() - 1) as i32, col_index + 1);
-    if let Some(row) = row_index.checked_sub(1) {
-        start_row = row;
-    }
+    for direction in DIRECTIONS.iter() {
+        let mut working_row = row_index;
+        let mut working_col = col_index;
+        loop {
+            let seat_address = (working_row + direction.0, working_col + direction.1);
 
-    if let Some(col) = col_index.checked_sub(1) {
-        start_col = col;
-    }
+            if seat_address.0 < 0 || seat_address.1 < 0 ||
+                seat_address.0 >= seat_list.len() as i32 || seat_address.1 >= seat_list[0].len() as i32 {
+                // Hit a "wall" while looking for occupied seats in this direction
+                break;
+            }
 
-    let mut occupied_count: usize = 0;
-    for row_to_check in start_row..=end_row {
-        let row_slice: &[char] = &(seat_list[row_to_check as usize])[start_col as usize..=end_col as usize];
-
-        //println!(">>>> {:?}", row_slice);
-
-        occupied_count += row_slice.iter()
-            .filter(|&seat| *seat == '#')
-            .count();
-    }
-    if seat_list[row_index as usize][col_index as usize] == '#' {
-        occupied_count -= 1;
+            match seat_list[seat_address.0 as usize][seat_address.1 as usize] {
+                'L' => {
+                    break;
+                },
+                '#' => {
+                    occupied_count += 1;
+                    break;
+                }
+                _ => {
+                    if nearby {
+                        // Count only immediate neighbors so break out of the loop even for empty
+                        // floor tiles
+                        break;
+                    } else {
+                        // For Part 2, the rules change to continue looking in the same direction
+                        // when seeing an empty floor tile
+                        working_row += direction.0;
+                        working_col += direction.1;
+                    }
+                },
+            }
+        }
     }
 
     occupied_count as u32
@@ -832,7 +839,7 @@ fn print_seating_chart(seat_list: &Vec<Vec<char>>) {
     print!("\n");
 }
 
-fn iterate_seating(seat_list: &Vec<Vec<char>>, crowding: u32) -> Option<Vec<Vec<char>>> {
+fn iterate_seating(seat_list: &Vec<Vec<char>>, crowding: u32, nearby: bool) -> Option<Vec<Vec<char>>> {
 
     let mut working_seat_list: Vec<Vec<char>> = seat_list.clone();
     let mut seat_list_changed = false;
@@ -843,13 +850,13 @@ fn iterate_seating(seat_list: &Vec<Vec<char>>, crowding: u32) -> Option<Vec<Vec<
         for (col_index, seat) in row.iter().enumerate() {
             match seat {
                 'L' => {
-                    if count_occupied_seats(row_index as i32, col_index as i32, true, &seat_list) == 0 {
+                    if count_occupied_seats(row_index as i32, col_index as i32, nearby, &seat_list) == 0 {
                         assign_seat(row_index, col_index, '#', &mut working_seat_list);
                         seat_list_changed = true;
                     }
                 },
                 '#' => {
-                    if count_occupied_seats(row_index as i32, col_index as i32, true, &seat_list) >= crowding {
+                    if count_occupied_seats(row_index as i32, col_index as i32, nearby, &seat_list) >= crowding {
                         assign_seat(row_index, col_index, 'L', &mut working_seat_list);
                         seat_list_changed = true;
                     }
@@ -882,7 +889,7 @@ fn day11() {
         seat_list.push(seat_line.chars().collect());
     }
 
-    while let Some(seating_result) = iterate_seating(&seat_list, 4) {
+    while let Some(seating_result) = iterate_seating(&seat_list, 4, true) {
         seat_list = seating_result;
     }
 
@@ -892,8 +899,7 @@ fn day11() {
         .fold(0, |sum, row| sum + row.iter()
             .filter(|&seat| *seat == '#')
             .count());
-    //assert_eq!(total_occupied_seats, 2126);
-    assert_eq!(total_occupied_seats, 37);
+    assert_eq!(total_occupied_seats, 2126);
     println!("Total occupied seat count: {}", total_occupied_seats);
 }
 
@@ -911,11 +917,19 @@ fn day11_part2() {
         seat_list.push(seat_line.chars().collect());
     }
 
-    while let Some(seating_result) = iterate_seating(&seat_list, 5) {
+    while let Some(seating_result) = iterate_seating(&seat_list, 5, false) {
         seat_list = seating_result;
 
         print_seating_chart(&seat_list);
     }
+
+    let total_occupied_seats = seat_list.iter()
+        .fold(0, |sum, row| sum + row.iter()
+            .filter(|&seat| *seat == '#')
+            .count());
+
+    assert_eq!(total_occupied_seats, 1914);
+    println!("Total occupied seat count: {}", total_occupied_seats);
 }
 
 fn main() {
