@@ -6,6 +6,7 @@ use std::io::{self, BufRead};
 use std::collections::{HashMap, HashSet};
 use regex::Regex;
 use std::cmp;
+use std::cmp::min;
 
 #[allow(dead_code)]
 fn day1() {
@@ -721,6 +722,7 @@ fn day9() {
     }
 }
 
+#[allow(dead_code)]
 fn day10() {
     println!("--- Day 10: Adapter Array ---\n");
 
@@ -779,6 +781,143 @@ fn day10() {
     println!("Number of permutations: {}", permutations);
 }
 
+fn count_occupied_seats(row_index: i32, col_index: i32, nearby: bool, seat_list: &Vec<Vec<char>>) -> u32 {
+
+    let directions: Vec<(i32, i32)> = vec![(-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1)];
+
+    for direction in directions {
+        let seat_address = (cmp::max(0, row_index + direction.1), cmp::max(0, col_index + direction.0));
+    }
+
+    let mut start_row: i32 = row_index;
+    let mut start_col: i32 = col_index;
+    let end_row: i32 = min((seat_list.len() - 1) as i32, row_index + 1);
+    let end_col: i32 = min((seat_list[row_index as usize].len() - 1) as i32, col_index + 1);
+    if let Some(row) = row_index.checked_sub(1) {
+        start_row = row;
+    }
+
+    if let Some(col) = col_index.checked_sub(1) {
+        start_col = col;
+    }
+
+    let mut occupied_count: usize = 0;
+    for row_to_check in start_row..=end_row {
+        let row_slice: &[char] = &(seat_list[row_to_check as usize])[start_col as usize..=end_col as usize];
+
+        //println!(">>>> {:?}", row_slice);
+
+        occupied_count += row_slice.iter()
+            .filter(|&seat| *seat == '#')
+            .count();
+    }
+    if seat_list[row_index as usize][col_index as usize] == '#' {
+        occupied_count -= 1;
+    }
+
+    occupied_count as u32
+}
+
+fn assign_seat(row_index: usize, col_index: usize, assignment: char, seat_list: &mut Vec<Vec<char>>) {
+    seat_list[row_index][col_index] = assignment;
+}
+
+#[allow(dead_code)]
+fn print_seating_chart(seat_list: &Vec<Vec<char>>) {
+    print!("\n");
+    for row in seat_list {
+        row.iter().for_each(|seat| print!("{}", seat));
+        print!("\n");
+    }
+    print!("\n");
+}
+
+fn iterate_seating(seat_list: &Vec<Vec<char>>, crowding: u32) -> Option<Vec<Vec<char>>> {
+
+    let mut working_seat_list: Vec<Vec<char>> = seat_list.clone();
+    let mut seat_list_changed = false;
+
+    //print_seating_chart(seat_list);
+
+    for (row_index, row) in seat_list.iter().enumerate() {
+        for (col_index, seat) in row.iter().enumerate() {
+            match seat {
+                'L' => {
+                    if count_occupied_seats(row_index as i32, col_index as i32, true, &seat_list) == 0 {
+                        assign_seat(row_index, col_index, '#', &mut working_seat_list);
+                        seat_list_changed = true;
+                    }
+                },
+                '#' => {
+                    if count_occupied_seats(row_index as i32, col_index as i32, true, &seat_list) >= crowding {
+                        assign_seat(row_index, col_index, 'L', &mut working_seat_list);
+                        seat_list_changed = true;
+                    }
+                },
+                _ => {
+                    // Nothing to do here
+                }
+            }
+        }
+    }
+
+    return if seat_list_changed {
+        Some(working_seat_list)
+    } else {
+        None
+    }
+}
+
+#[allow(dead_code)]
+fn day11() {
+    println!("--- Day 11: Seating System ---\n");
+    let input_path = "input_data/day11_input.txt";
+    let reader = io::BufReader::new(File::open(input_path).unwrap());
+    let input_seat_list: Vec<String> = reader.lines()
+        .map(|l| l.expect("Failed to read input line"))
+        .collect();
+
+    let mut seat_list: Vec<Vec<char>> = vec![];
+    for seat_line in input_seat_list {
+        seat_list.push(seat_line.chars().collect());
+    }
+
+    while let Some(seating_result) = iterate_seating(&seat_list, 4) {
+        seat_list = seating_result;
+    }
+
+    //print_seating_chart(&seat_list);
+
+    let total_occupied_seats = seat_list.iter()
+        .fold(0, |sum, row| sum + row.iter()
+            .filter(|&seat| *seat == '#')
+            .count());
+    //assert_eq!(total_occupied_seats, 2126);
+    assert_eq!(total_occupied_seats, 37);
+    println!("Total occupied seat count: {}", total_occupied_seats);
+}
+
+fn day11_part2() {
+    println!("--- Day 11: Seating System ---");
+    println!("--- Part 2                 ---\n");
+    let input_path = "input_data/day11_input.txt";
+    let reader = io::BufReader::new(File::open(input_path).unwrap());
+    let input_seat_list: Vec<String> = reader.lines()
+        .map(|l| l.expect("Failed to read input line"))
+        .collect();
+
+    let mut seat_list: Vec<Vec<char>> = vec![];
+    for seat_line in input_seat_list {
+        seat_list.push(seat_line.chars().collect());
+    }
+
+    while let Some(seating_result) = iterate_seating(&seat_list, 5) {
+        seat_list = seating_result;
+
+        print_seating_chart(&seat_list);
+    }
+}
+
 fn main() {
     println!("         .     .  .      +     .      .          .");
     println!("     .       .      .     #       .           .");
@@ -811,5 +950,7 @@ fn main() {
     //day8();
     //day8_part2();
     //day9();
-    day10();
+    //day10();
+    //day11();
+    day11_part2();
 }
