@@ -7,7 +7,6 @@ use std::collections::{HashMap, HashSet};
 use regex::Regex;
 use std::cmp;
 
-#[allow(dead_code)]
 fn day1() {
 
     println!("--- Day 1: Report Repair ---");
@@ -51,7 +50,6 @@ fn day1() {
     println!("----------------------------");
 }
 
-#[allow(dead_code)]
 fn day2_part1() {
     println!("--- Day 2: Password Philosophy ---");
     println!("--- Part 1                     ---\n");
@@ -94,7 +92,6 @@ fn day2_part1() {
     println!("Number of valid passwords: {}", valid_count);
 }
 
-#[allow(dead_code)]
 fn day2_part2() {
     println!("--- Part 2                     ---\n");
 
@@ -135,7 +132,6 @@ fn day2_part2() {
     println!("Number of valid passwords: {}", valid_count);
 }
 
-#[allow(dead_code)]
 fn day3() {
     println!("--- Day 3: Toboggan Trajectory ---");
     println!("--- Part 1                     ---\n");
@@ -168,7 +164,6 @@ fn day3() {
     println!("Total trees hit: {}", tree_total);
 }
 
-#[allow(dead_code)]
 fn day3_part2() {
     println!("--- Day 3: Toboggan Trajectory ---");
     println!("--- Part 2                     ---\n");
@@ -215,7 +210,6 @@ fn day3_part2() {
     println!("Tree product: {}", tree_product);
 }
 
-#[allow(dead_code)]
 fn day4_part1_is_valid_passport(passport: Vec<&str>) -> bool {
     let number_of_required_fields: usize = 7;
 
@@ -230,7 +224,6 @@ fn day4_part1_is_valid_passport(passport: Vec<&str>) -> bool {
     return number_of_required_fields == tags.iter().filter(|&(key, value)| *key != "cid" && *value == true).count()
 }
 
-#[allow(dead_code)]
 fn is_valid_height(value: &str) -> bool {
     // unit check
     if value.len() >= 2 {
@@ -248,7 +241,6 @@ fn is_valid_height(value: &str) -> bool {
     }
 }
 
-#[allow(dead_code)]
 fn is_valid_hair_color(value: &str) -> bool {
     lazy_static! {
         static ref RE: Regex = Regex::new("^#[0-9a-f]{6}$").unwrap();
@@ -257,7 +249,6 @@ fn is_valid_hair_color(value: &str) -> bool {
     RE.is_match(value)
 }
 
-#[allow(dead_code)]
 fn is_valid_eye_color(value: &str) -> bool {
     lazy_static! {
         static ref RE: Regex = Regex::new("^(amb)|(blu)|(brn)|(gry)|(grn)|(hzl)|(oth)$").unwrap();
@@ -266,7 +257,6 @@ fn is_valid_eye_color(value: &str) -> bool {
     RE.is_match(value)
 }
 
-#[allow(dead_code)]
 fn day4_part2_is_field_valid(field_name: &str, value: &str) ->bool {
     // byr (Birth Year)
     // iyr (Issue Year)
@@ -293,7 +283,6 @@ fn day4_part2_is_field_valid(field_name: &str, value: &str) ->bool {
     }
 }
 
-#[allow(dead_code)]
 fn day4_part2_is_valid_passport(passport: Vec<&str>) -> bool {
     let number_of_required_fields: usize = 7;
 
@@ -313,7 +302,6 @@ fn day4_part2_is_valid_passport(passport: Vec<&str>) -> bool {
     return number_of_required_fields == tags.iter().filter(|&(key, value)| *key != "cid" && *value == true).count()
 }
 
-#[allow(dead_code)]
 fn day4() {
     println!("--- Day 4: Passport Processing ---");
     println!("--- Part 1                     ---\n");
@@ -374,7 +362,6 @@ fn day4() {
     assert_eq!(valid_passport_count_part2, 160);
 }
 
-#[allow(dead_code)]
 fn day5() {
     println!("--- Day 5: Binary Boarding ---\n");
 
@@ -426,7 +413,6 @@ fn day5() {
     }
 }
 
-#[allow(dead_code)]
 fn day6() {
     println!("--- Day 6: Custom Customs ---");
     println!("--- Part 1                ---");
@@ -462,7 +448,6 @@ fn day6() {
     println!("Sum of answers: {}", answer_sum);
 }
 
-#[allow(dead_code)]
 fn day6_part2() {
     println!("--- Day 6: Custom Customs ---");
     println!("--- Part 2                ---");
@@ -496,7 +481,6 @@ fn day6_part2() {
     assert_eq!(answer_sum, 3435);
 }
 
-#[allow(dead_code)]
 fn search_for_bag(bag: &str, total_list: &HashMap<String, HashMap<String, usize>>, bag_node_list: &HashMap<String, usize>) -> bool {
     // If the bag node contains the bag search string, then return right away since it was found.
     // No need to search deeper.
@@ -518,7 +502,6 @@ fn search_for_bag(bag: &str, total_list: &HashMap<String, HashMap<String, usize>
     false
 }
 
-#[allow(dead_code)]
 fn count_bags_in_bag(total_list: &HashMap<String, HashMap<String, usize>>, bag_node_list: &HashMap<String, usize>) -> usize {
     let mut bag_sum: usize = 0;
     for bag_node in bag_node_list {
@@ -529,7 +512,6 @@ fn count_bags_in_bag(total_list: &HashMap<String, HashMap<String, usize>>, bag_n
     bag_sum
 }
 
-#[allow(dead_code)]
 fn day7() {
     println!("--- Day 7: Handy Haversacks ---\n");
 
@@ -611,7 +593,6 @@ fn test_bootcode(bootcode: &Vec<String>) -> (bool, i32) {
     }
 }
 
-#[allow(dead_code)]
 fn day8() {
     println!("--- Day 8: Handheld Halting ---\n");
     let input_path = "input_data/day8_input.txt";
@@ -624,7 +605,6 @@ fn day8() {
     println!("Final accumulator value: {}", result.1);
 }
 
-#[allow(dead_code)]
 fn day8_part2() {
     println!("--- Day 8: Handheld Halting ---");
     println!("--- Part 2                  ---\n");
@@ -672,7 +652,6 @@ fn find_two_values_for_sum(slice: &[u32], sum: u32) -> bool {
     result
 }
 
-#[allow(dead_code)]
 fn day9() {
     println!("--- Day 9: Encoding Error ---\n");
     let input_path = "input_data/day9_input.txt";
@@ -721,7 +700,6 @@ fn day9() {
     }
 }
 
-#[allow(dead_code)]
 fn day10() {
     println!("--- Day 10: Adapter Array ---\n");
 
@@ -875,7 +853,6 @@ fn iterate_seating(seat_list: &Vec<Vec<char>>, crowding: u32, nearby: bool) -> O
     }
 }
 
-#[allow(dead_code)]
 fn day11() {
     println!("--- Day 11: Seating System ---\n");
     let input_path = "input_data/day11_input.txt";
@@ -920,7 +897,7 @@ fn day11_part2() {
     while let Some(seating_result) = iterate_seating(&seat_list, 5, false) {
         seat_list = seating_result;
 
-        print_seating_chart(&seat_list);
+        //print_seating_chart(&seat_list);
     }
 
     let total_occupied_seats = seat_list.iter()
@@ -951,20 +928,35 @@ fn main() {
     println!(".. .. ..................O000O........................ ...... ...");
     println!("... .. .......... Advent of Code 2020 ................... ... ..");
 
-    // day1();
-    // day2_part1();
-    // day2_part2();
-    //day3();
-    //day3_part2();
-    //day4();
-    //day5();
-    //day6();
-    //day6_part2();
-    //day7();
-    //day8();
-    //day8_part2();
-    //day9();
-    //day10();
-    //day11();
-    day11_part2();
+    // Setup a silly match statement to stop having to put #[allow(dead_code)] everywhere
+    const DAY_TO_RUN: u32 = 11;
+    match DAY_TO_RUN {
+        1 => day1(),
+        2 => {
+            day2_part1();
+            day2_part2();
+        },
+        3 => {
+            day3();
+            day3_part2();
+        },
+        4 => day4(),
+        5 => day5(),
+        6 => {
+            day6();
+            day6_part2();
+        },
+        7 => day7(),
+        8 => {
+            day8();
+            day8_part2();
+        },
+        9 => day9(),
+        10 => day10(),
+        11 => {
+            day11();
+            day11_part2();
+        }
+        _ => {},
+    }
 }
