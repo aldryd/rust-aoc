@@ -6,6 +6,8 @@ use std::io::{self, BufRead};
 use std::collections::{HashMap, HashSet};
 use regex::Regex;
 use std::cmp;
+use std::ops::{Add, Sub, SubAssign, AddAssign};
+use std::fmt::Display;
 
 fn day1() {
 
@@ -909,6 +911,193 @@ fn day11_part2() {
     println!("Total occupied seat count: {}", total_occupied_seats);
 }
 
+#[derive(Copy, Clone)]
+enum CardinalDirection {
+    North = 0,
+    East = 1,
+    South = 2,
+    West = 3,
+}
+
+impl Add<i32> for CardinalDirection {
+    type Output = Self;
+
+    fn add(self, other_degrees: i32) -> CardinalDirection {
+        let ticks = other_degrees / 90;
+
+        let mut new_value = self as i32 + ticks;
+        while new_value > 4 {
+            new_value -= 4;
+        }
+
+        // @TODO: There must be a better way in Rust to translate these values back to the enum value
+        match new_value as i32 {
+            0 => CardinalDirection::North,
+            1 => CardinalDirection::East,
+            2 => CardinalDirection::South,
+            3 => CardinalDirection::West,
+            _ => CardinalDirection::North,
+        }
+    }
+}
+
+impl Sub<i32> for CardinalDirection {
+    type Output = Self;
+
+    fn sub(self, other_degrees: i32) -> CardinalDirection {
+        let ticks = other_degrees / 90;
+
+        let mut new_value = self as i32 - ticks;
+        while new_value < 0 {
+            new_value += 4;
+        }
+
+        // @TODO: There must be a better way in Rust to translate these values back to the enum value
+        match new_value as i32 {
+            0 => CardinalDirection::North,
+            1 => CardinalDirection::East,
+            2 => CardinalDirection::South,
+            3 => CardinalDirection::West,
+            _ => CardinalDirection::North,
+        }
+    }
+}
+
+impl AddAssign<i32> for CardinalDirection {
+    fn add_assign(&mut self, other_degrees: i32) {
+        *self = self.add(other_degrees);
+    }
+}
+
+impl SubAssign<i32> for CardinalDirection {
+    fn sub_assign(&mut self, other_degrees: i32) {
+        *self = self.sub(other_degrees);
+    }
+}
+
+impl Display for CardinalDirection {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let direction: &str;
+        match self {
+            CardinalDirection::North => direction = "North",
+            CardinalDirection::East => direction = "East",
+            CardinalDirection::South => direction = "South",
+            CardinalDirection::West => direction = "West",
+        }
+        write!(f, "{}", direction)
+    }
+}
+
+fn day12() {
+    println!("--- Day 12: Rain Risk ---");
+    let input_path = "input_data/day12_input.txt";
+    let reader = io::BufReader::new(File::open(input_path).unwrap());
+    let navigation_instructions: Vec<String> = reader.lines()
+        .map(|l| l.expect("Failed to read input line"))
+        .collect();
+
+    let mut current_heading: CardinalDirection = CardinalDirection::East;
+    let mut distance: (i32, i32) = (0, 0);
+
+    for instruction in navigation_instructions {
+        let dir_instruction = instruction.chars().nth(0).unwrap();
+        let count = instruction.split(&dir_instruction.to_string()).nth(1).unwrap().parse::<i32>().unwrap();
+
+        match dir_instruction {
+            'N' => {
+                distance.1 += count;
+            },
+            'S' => {
+                distance.1 -= count;
+            },
+            'E' => {
+                distance.0 += count;
+            },
+            'W' => {
+                distance.0 -= count;
+            },
+            'L' => {
+                current_heading -= count;
+            },
+            'R' => {
+                current_heading += count;
+            },
+            'F' => {
+                match current_heading {
+                    CardinalDirection::North => distance.1 += count,
+                    CardinalDirection::South => distance.1 -= count,
+                    CardinalDirection::East => distance.0 += count,
+                    CardinalDirection::West => distance.0 -= count,
+                }
+            },
+            _ => {},
+        }
+    }
+
+    assert_eq!(distance.0.abs() + distance.1.abs(), 1148);
+    println!("Final coordinate: {:?}", distance);
+    println!("Sum: {}", distance.0.abs() + distance.1.abs());
+}
+
+fn day12_part2() {
+    println!("--- Part 2            ---\n");
+    let input_path = "input_data/day12_input.txt";
+    let reader = io::BufReader::new(File::open(input_path).unwrap());
+    let navigation_instructions: Vec<String> = reader.lines()
+        .map(|l| l.expect("Failed to read input line"))
+        .collect();
+
+    let mut distance: (i32, i32) = (0, 0);
+    let mut way_point: (i32, i32) = (10, 1);
+
+    for instruction in navigation_instructions {
+        let dir_instruction = instruction.chars().nth(0).unwrap();
+        let count = instruction.split(&dir_instruction.to_string()).nth(1).unwrap().parse::<i32>().unwrap();
+
+        match dir_instruction {
+            'N' => {
+                way_point.1 += count;
+            },
+            'S' => {
+                way_point.1 -= count;
+            },
+            'E' => {
+                way_point.0 += count;
+            },
+            'W' => {
+                way_point.0 -= count;
+            },
+            'L' => {
+                let ticks = count / 90;
+                match ticks {
+                    1 => way_point = (-1 * way_point.1, way_point.0),
+                    2 => way_point = (-1 * way_point.0, -1 * way_point.1),
+                    3 => way_point = (way_point.1, -1 * way_point.0),
+                    _ => {}
+                }
+            },
+            'R' => {
+                let ticks = count / 90;
+                match ticks {
+                    1 => way_point = (way_point.1, -1 * way_point.0),
+                    2 => way_point = (-1 * way_point.0, -1 * way_point.1),
+                    3 => way_point = (-1 * way_point.1, way_point.0),
+                    _ => {}
+                }
+            },
+            'F' => {
+                distance.0 += count * way_point.0;
+                distance.1 += count * way_point.1;
+            },
+            _ => {},
+        }
+    }
+
+    assert_eq!(distance.0.abs() + distance.1.abs(), 52203);
+    println!("Final coordinate: {:?}", distance);
+    println!("Sum: {}", distance.0.abs() + distance.1.abs());
+}
+
 fn main() {
     println!("         .     .  .      +     .      .          .");
     println!("     .       .      .     #       .           .");
@@ -929,7 +1118,7 @@ fn main() {
     println!("... .. .......... Advent of Code 2020 ................... ... ..");
 
     // Setup a silly match statement to stop having to put #[allow(dead_code)] everywhere
-    const DAY_TO_RUN: u32 = 11;
+    const DAY_TO_RUN: u32 = 12;
     match DAY_TO_RUN {
         1 => day1(),
         2 => {
@@ -956,7 +1145,11 @@ fn main() {
         11 => {
             day11();
             day11_part2();
-        }
+        },
+        12 => {
+            day12();
+            day12_part2();
+        },
         _ => {},
     }
 }
