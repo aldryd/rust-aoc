@@ -588,10 +588,10 @@ fn test_bootcode(bootcode: &Vec<String>) -> (bool, i32) {
         }
     }
 
-    if instruction_pointer >= bootcode.len() as i32 {
-        return (true, accumlator)
+    return if instruction_pointer >= bootcode.len() as i32 {
+        (true, accumlator)
     } else {
-        return (false, accumlator)
+        (false, accumlator)
     }
 }
 
@@ -1098,6 +1098,38 @@ fn day12_part2() {
     println!("Sum: {}", distance.0.abs() + distance.1.abs());
 }
 
+fn day13() {
+    println!("--- Day 13: Shuttle Search ---\n");
+    let input_path = "input_data/day13_input.txt";
+    let reader = io::BufReader::new(File::open(input_path).unwrap());
+    let shuttle_notes: Vec<String> = reader.lines()
+        .map(|l| l.expect("Failed to read input line"))
+        .collect();
+
+    let earliest_time = shuttle_notes[0].parse::<u32>().unwrap();
+    let buses: Vec<u32> = shuttle_notes[1].split(',')
+        .filter(|&bus| bus != "x")
+        .map(|bus| bus.parse::<u32>().unwrap())
+        .collect();
+
+    let mut earliest_bus: u32 = 0;
+    let mut departure_time: u32 = 0;
+    'outer: for time in earliest_time..=(earliest_time + buses.iter().max().unwrap()) {
+        for bus in &buses {
+            if time % bus == 0 {
+                println!("Earliest bus: {}", bus);
+                earliest_bus = *bus;
+                departure_time = time;
+                break 'outer;
+            }
+        }
+    }
+
+    println!("Wait time: {}", departure_time - earliest_time);
+    println!("Bus * wait time: {}", earliest_bus * (departure_time - earliest_time));
+    assert_eq!(earliest_bus * (departure_time - earliest_time), 3997);
+}
+
 fn main() {
     println!("         .     .  .      +     .      .          .");
     println!("     .       .      .     #       .           .");
@@ -1118,7 +1150,7 @@ fn main() {
     println!("... .. .......... Advent of Code 2020 ................... ... ..");
 
     // Setup a silly match statement to stop having to put #[allow(dead_code)] everywhere
-    const DAY_TO_RUN: u32 = 12;
+    const DAY_TO_RUN: u32 = 13;
     match DAY_TO_RUN {
         1 => day1(),
         2 => {
@@ -1150,6 +1182,7 @@ fn main() {
             day12();
             day12_part2();
         },
+        13 => day13(),
         _ => {},
     }
 }
