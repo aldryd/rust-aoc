@@ -1,7 +1,9 @@
 use std::borrow::Borrow;
 use std::collections::HashMap;
+use std::env;
 use std::fs::File;
 use std::io::{self, BufRead};
+use std::time::Instant;
 
 /// Reads the input filename and returns a Vector of Strings for each line in the file
 fn read_lines(filename: &str) -> Vec<String> {
@@ -11,7 +13,7 @@ fn read_lines(filename: &str) -> Vec<String> {
     reader.lines().flatten().flat_map(|l| l.parse()).collect()
 }
 
-fn _day1_part1() {
+fn day1_part1() {
     println!("--- Day 1: Historian Hysteria ---");
     println!("--- Part 1                    ---\n");
 
@@ -42,7 +44,7 @@ fn _day1_part1() {
     assert_eq!(total_distance, 2031679);
 }
 
-fn _day1_part2() {
+fn day1_part2() {
     println!("--- Day 1: Historian Hysteria ---");
     println!("--- Part 2                    ---\n");
 
@@ -78,7 +80,7 @@ fn _day1_part2() {
     assert_eq!(total_similarity, 19678534);
 }
 
-fn _day2_part1() {
+fn day2_part1() {
     println!("--- Day 2: Red-Nosed Reports ---");
     println!("--- Part 1                   ---\n");
 
@@ -101,7 +103,7 @@ fn _day2_part1() {
     assert_eq!(total_safe_reports, 432);
 }
 
-fn _day2_part2() {
+fn day2_part2() {
     println!("--- Day 2: Red-Nosed Reports ---");
     println!("--- Part 2                   ---\n");
 
@@ -195,8 +197,27 @@ fn main() {
     println!(".. .. ..................O000O........................ ...... ...");
     println!("... .. .......... Advent of Code 2024 ................... ... ..\n");
 
-    // _day1_part1();
-    // _day1_part2();
-    // _day2_part1();
-    _day2_part2();
+    let args: Vec<String> = env::args().collect();
+    if args.len() != 2 {
+        panic!("Usage: aoc-2024 DAY");
+    }
+
+    let day: u8 = args.get(1).unwrap().parse::<u8>().unwrap();
+
+    let time = Instant::now();
+
+    match day {
+        1 => {
+            day1_part1();
+            day1_part2();
+        },
+        2 => {
+            day2_part1();
+            day2_part2();
+        },
+        _ => {}
+    }
+
+    let elapsed_ms = time.elapsed().as_nanos() as f64 / 1_000_000.0;
+    println!("\nElapsed Time: {:.4} ms", elapsed_ms);
 }
