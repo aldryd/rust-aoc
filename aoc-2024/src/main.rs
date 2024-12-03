@@ -178,6 +178,90 @@ fn is_report_safe(report: &Vec<i32>, max_level_change: i32, skip_index: Option<u
     is_safe
 }
 
+fn day3_part1() {
+    println!("--- Day 3: Mull It Over ---");
+    println!("--- Part 1              ---\n");
+
+    let day3_input = read_lines("resources/day3_input.txt");
+
+    let valid_characters: Vec<char> = ['m', 'u', 'l', '(', ')', ',', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'].to_vec();
+
+    let mut total = 0;
+    for line in day3_input {
+        // Get rid of all the known junk characters
+        let filtered_input: String = line.chars().filter(|x| valid_characters.contains(x)).collect();
+
+        // println!(">>>> {:?}", filtered_input);
+
+        if let Some(value) = get_multiple(&filtered_input) {
+            total += value;
+        }
+    }
+
+    println!(">>>> Uncorrupted total: {}\n", total);
+}
+
+fn get_multiple(input: &str) -> Option<i32> {
+    if let Some(mul_tokens) = input.split_once("mul(") {
+        let mut multipler_stash: String = "".to_owned();
+
+        let mut multiplier1: i32 = 0;
+        let mut multiplier2: i32 = 0;
+
+        let mut next: bool = false;
+        let mut total: i32 = 0;
+
+        for (index, character) in mul_tokens.1.chars().enumerate() {
+            if character.is_numeric() {
+                multipler_stash.push(character);
+            } else if character == ',' {
+                if let Ok(value) = multipler_stash.parse::<i32>() {
+                    multiplier1 = value;
+                }
+
+                multipler_stash.clear();
+            } else if character == ')' {
+                if let Ok(value) = multipler_stash.parse::<i32>() {
+                    multiplier2 = value;
+                }
+
+                multipler_stash.clear();
+
+                // println!(">>>> {} * {}", multiplier1, multiplier2);
+                total = multiplier1 * multiplier2;
+
+                next = true;
+            } else {
+                multiplier1 = 0;
+                multiplier2 = 0;
+                multipler_stash.clear();
+
+                next = true;
+            }
+
+            if next {
+                let substring: String = mul_tokens.1.chars().skip(index).collect();
+                if let Some(value) = get_multiple(substring.borrow()) {
+                    total += value;
+                }
+
+                break;
+            }
+        }
+
+        Some(total)
+    } else {
+        None
+    }
+}
+
+fn day3_part2() {
+    println!("--- Day 3: Mull It Over ---");
+    println!("--- Part 2              ---\n");
+
+    let day3_input = read_lines("resources/day3_input.txt");
+}
+
 fn main() {
     println!("         .     .  .      +     .      .          .");
     println!("     .       .      .     #       .           .");
@@ -214,6 +298,10 @@ fn main() {
         2 => {
             day2_part1();
             day2_part2();
+        },
+        3 => {
+            day3_part1();
+            day3_part2();
         },
         _ => {}
     }
