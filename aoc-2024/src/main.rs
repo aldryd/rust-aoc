@@ -1,3 +1,4 @@
+use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{self, BufRead};
@@ -77,6 +78,104 @@ fn _day1_part2() {
     assert_eq!(total_similarity, 19678534);
 }
 
+fn _day2_part1() {
+    println!("--- Day 2: Red-Nosed Reports ---");
+    println!("--- Part 1                   ---\n");
+
+    let day2_input = read_lines("resources/day2_input.txt");
+
+    const MAX_LEVEL_CHANGE: i32 = 3;
+    let mut total_safe_reports = 0;
+
+    for report_raw in day2_input {
+        let report: Vec<i32> = report_raw.split(" ").map(|x| x.trim().parse::<i32>().unwrap()).collect();
+
+        if is_report_safe(report.borrow(), MAX_LEVEL_CHANGE, None) {
+            total_safe_reports += 1;
+        }
+    }
+
+    println!(">>>> Number of safe reports: {}", total_safe_reports);
+
+    // Keep track of the final answer for my input in case a refactor creates a bug
+    assert_eq!(total_safe_reports, 432);
+}
+
+fn _day2_part2() {
+    println!("--- Day 2: Red-Nosed Reports ---");
+    println!("--- Part 2                   ---\n");
+
+    let day2_input = read_lines("resources/day2_input.txt");
+
+    const MAX_LEVEL_CHANGE: i32 = 3;
+    let mut total_safe_reports = 0;
+
+    for report_raw in day2_input {
+        let report: Vec<i32> = report_raw.split(" ").map(|x| x.trim().parse::<i32>().unwrap()).collect();
+
+        if is_report_safe(report.borrow(), MAX_LEVEL_CHANGE, None) {
+            total_safe_reports += 1;
+        } else {
+            // If the report is unsafe, iterate through the report while skipping 1 element at a time
+            for index in 0..report.len() {
+                if is_report_safe(report.borrow(), MAX_LEVEL_CHANGE, Some(index)) {
+                    // Any report that can be considered safe by skipping a single step should be counted
+                    total_safe_reports += 1;
+                    break;
+                }
+            }
+        }
+    }
+
+    println!(">>>> Number of safe reports: {}", total_safe_reports);
+
+    // Keep track of the final answer for my input in case a refactor creates a bug
+    assert_eq!(total_safe_reports, 488);
+}
+
+fn is_report_safe(report: &Vec<i32>, max_level_change: i32, skip_index: Option<usize>) -> bool {
+    let mut is_increasing: Option<bool> = None;
+    let mut is_safe: bool = true;
+
+    // Create a local copy that can be modified. This allows us to use the windows iterator more easily.
+    // It would probably be more efficient to write the for loop such that it skips the index while
+    // checking each item instead of creating a clone.
+    let mut local_report: Vec<i32> = report.clone();
+
+    if let Some(index) = skip_index {
+        local_report.remove(index);
+    }
+
+    for level_window in local_report.windows(2) {
+        let difference = level_window.get(1).unwrap() - level_window.get(0).unwrap();
+
+        if difference == 0 {
+            // If there is no change in the levels, we already know this is an unsafe report since they
+            // must all increase or decrease
+            is_safe = false;
+            break;
+        }
+
+        // If is_increasing has not yet been set, use the first time through as the value it should be for
+        // the entire set of numbers
+        if let Some(local_is_increasing) = is_increasing {
+            if (difference > 0) != local_is_increasing {
+                // If the current increase/decrease is different than the saved value, this report is unsafe
+                is_safe = false;
+                break;
+            }
+        }
+
+        is_increasing = Some(difference > 0);
+
+        if difference.abs() > max_level_change {
+            is_safe = false;
+            break;
+        }
+    }
+    is_safe
+}
+
 fn main() {
     println!("         .     .  .      +     .      .          .");
     println!("     .       .      .     #       .           .");
@@ -96,6 +195,8 @@ fn main() {
     println!(".. .. ..................O000O........................ ...... ...");
     println!("... .. .......... Advent of Code 2024 ................... ... ..\n");
 
-    _day1_part1();
-    _day1_part2();
+    // _day1_part1();
+    // _day1_part2();
+    // _day2_part1();
+    _day2_part2();
 }
