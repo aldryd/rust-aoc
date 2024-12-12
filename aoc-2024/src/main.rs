@@ -199,6 +199,9 @@ fn day3_part1() {
     }
 
     println!(">>>> Uncorrupted total: {}\n", total);
+
+    // Keep track of the final answer for my input in case a refactor creates a bug
+    assert_eq!(total, 173529487);
 }
 
 fn get_multiple(input: &str) -> Option<i32> {
@@ -255,11 +258,176 @@ fn get_multiple(input: &str) -> Option<i32> {
     }
 }
 
+#[derive(PartialEq)]
+enum CommandDay3 {
+    NoCommand,
+    Multiply,
+    Do,
+    Dont,
+}
+
+impl std::fmt::Display for CommandDay3 {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let command: &str;
+        match self {
+            CommandDay3::Multiply => command = "Multiply",
+            CommandDay3::Do => command = "Do",
+            CommandDay3::Dont => command = "Don\'t",
+            CommandDay3::NoCommand => command = "No Command",
+        }
+        write!(f, "{}", command)
+    }
+}
+
+#[derive(PartialEq)]
+enum FinderState {
+    Scanning,
+    ScanningForMul1,
+    ScanningForMul2,
+    ScanningForMul3,
+    ScanningForDoOrDont,
+    ScanningForDont,
+}
+
 fn day3_part2() {
     println!("--- Day 3: Mull It Over ---");
     println!("--- Part 2              ---\n");
 
     let day3_input = read_lines("resources/day3_input.txt");
+
+    let _valid_characters: Vec<char> = ['m', 'u', 'l', 'd', 'o', 'n', '\'', 't', '(', ')', ',', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'].to_vec();
+
+    let mut total: i32 = 0;
+    let mut should_execute_command: bool = true;
+
+    for line in day3_input {
+        // Get rid of all the known junk characters
+        // @todo The command pattern matching currently has a bug where filtering out the invalid characters yields the wrong result
+        // let filtered_input: String = line.chars().filter(|x| valid_characters.contains(x)).collect();
+        let filtered_input: String = line;
+        let mut index: usize = 0;
+
+        while index < filtered_input.len() {
+            let result = get_next_command(&filtered_input, index);
+            index = result.1;
+            let current_cmd = result.0;
+
+            if current_cmd == CommandDay3::Dont {
+                should_execute_command = false;
+            } else if current_cmd == CommandDay3::Do {
+                should_execute_command = true;
+            }
+
+            if should_execute_command && current_cmd == CommandDay3::Multiply {
+                if let Some((multiplier1, multiplier2)) = get_mul_inputs(&filtered_input, index) {
+                    total += multiplier1 * multiplier2;
+                }
+            }
+        }
+    }
+
+    println!(">>>> Uncorrupted total: {}\n", total);
+
+    // Keep track of the final answer for my input in case a refactor creates a bug
+    assert_eq!(total, 99532691);
+}
+
+fn get_next_command(input: &str, start_index: usize) -> (CommandDay3, usize) {
+    let mut state = FinderState::Scanning;
+
+    for (ii, character) in input.chars().skip(start_index).enumerate() {
+        match character {
+            'm' => {
+                state = FinderState::ScanningForMul1;
+            },
+            'u' => {
+                if state != FinderState::ScanningForMul1 {
+                    state = FinderState::Scanning;
+                } else {
+                    state = FinderState::ScanningForMul2
+                }
+            },
+            'l' => {
+                if state != FinderState::ScanningForMul2 {
+                    state = FinderState::Scanning;
+                } else {
+                    state = FinderState::ScanningForMul3
+                }
+            },
+            'd' => {
+                state = FinderState::ScanningForDoOrDont;
+            },
+            'o' => {
+                if state != FinderState::ScanningForDoOrDont {
+                    state = FinderState::Scanning;
+                }
+            },
+            'n' => {
+                if state != FinderState::ScanningForDoOrDont {
+                    state = FinderState::Scanning;
+                } else {
+                    state = FinderState::ScanningForDont;
+                }
+            },
+            '\'' => {
+                if state != FinderState::ScanningForDont {
+                    state = FinderState::Scanning;
+                }
+            },
+            't' => {
+                if state != FinderState::ScanningForDont {
+                    state = FinderState::Scanning;
+                }
+            },
+            '(' => {
+                match state {
+                    FinderState::ScanningForMul3 => return (CommandDay3::Multiply, ii + start_index),
+                    FinderState::ScanningForDoOrDont => return (CommandDay3::Do, ii + start_index),
+                    FinderState::ScanningForDont => return (CommandDay3::Dont, ii + start_index),
+                    _ => {
+                        state = FinderState::Scanning;
+                    },
+                }
+            }
+            _ => {
+                state = FinderState::Scanning;
+            },
+        }
+    }
+
+    return (CommandDay3::NoCommand, input.len())
+}
+
+fn get_mul_inputs(input: &str, start_index: usize) -> Option<(i32, i32)> {
+    let mut multipler_stash: String = "".to_owned();
+
+    let mut multiplier1: i32 = 0;
+
+    for character in input.chars().skip(start_index) {
+        if character == '(' {
+            // Nothing to do here. Let the ( go on by
+        } else if character.is_numeric() {
+            multipler_stash.push(character);
+        } else if character == ',' {
+            if let Ok(value) = multipler_stash.parse::<i32>() {
+                multiplier1 = value;
+            } else {
+                return None
+            }
+
+            multipler_stash.clear();
+        } else if character == ')' {
+            if let Ok(value) = multipler_stash.parse::<i32>() {
+                return Some((multiplier1, value))
+            } else {
+                return None
+            }
+        } else {
+            return None
+        }
+    }
+
+    return None
 }
 
 fn main() {
