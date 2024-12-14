@@ -593,6 +593,71 @@ fn day4_part2() {
     assert_eq!(total, 1969);
 }
 
+fn day5_part1() {
+    println!("--- Day 5: Print Queue ---");
+    println!("--- Part 1             ---\n");
+
+    let day5_input = read_lines("resources/day5_input.txt");
+
+    let mut page_rules: HashMap<i32, Vec<i32>> = HashMap::new();
+    let mut page_updates: Vec<Vec<i32>> = vec![];
+
+    let mut total = 0;
+    for line in day5_input {
+        if line.contains("|") {
+            if let Some(raw_rules) = line.split_once("|") {
+                // Build up a rule set for the sorting order of each value. The value in the HashMap represents the
+                // page numbers that must come after the key.
+                let key: i32 = raw_rules.0.parse::<i32>().unwrap();
+                let value: i32 = raw_rules.1.parse::<i32>().unwrap();
+
+                page_rules.entry(key).and_modify(|val_list| val_list.push(value)).or_insert(vec![value]);
+            }
+        } else if line.contains(",") {
+            let update: Vec<i32> = line.split(",").map(|x| x.trim().parse::<i32>().unwrap()).collect();
+            page_updates.push(update);
+        }
+    }
+
+    // For each page update in the list, run a sort. If the order changes, then we know the update is invalid.
+    for update in page_updates.iter_mut() {
+        // Keep the original so we can compare after it is sorted
+        let original = update.clone();
+
+        update.sort_by(|a, b| {
+            if let Some(order_rules) = page_rules.get(a) {
+                for rhs in order_rules {
+                    if b == rhs {
+                        return std::cmp::Ordering::Less
+                    }
+                }
+            }
+
+            return std::cmp::Ordering::Equal
+        });
+
+        if update == &original {
+            total += update.get(update.len() / 2).unwrap();
+        }
+    }
+
+    println!(">>>> Page total: {}\n", total);
+
+    // Keep track of the final answer for my input in case a refactor creates a bug
+    assert_eq!(total, 4578);
+}
+
+fn day5_part2() {
+    println!("--- Day 5: Print Queue ---");
+    println!("--- Part 2             ---\n");
+
+    let day5_input = read_lines("resources/day5_input.txt");
+
+
+    // Keep track of the final answer for my input in case a refactor creates a bug
+    // assert_eq!(total, 1969);
+}
+
 fn main() {
     println!("         .     .  .      +     .      .          .");
     println!("     .       .      .     #       .           .");
@@ -611,6 +676,8 @@ fn main() {
     println!("       .         .   .   000     .        .       .");
     println!(".. .. ..................O000O........................ ...... ...");
     println!("... .. .......... Advent of Code 2024 ................... ... ..\n");
+
+    day5_part1();
 
     let args: Vec<String> = env::args().collect();
     if args.len() != 2 {
@@ -637,6 +704,10 @@ fn main() {
         4 => {
             day4_part1();
             day4_part2();
+        },
+        5 => {
+            day5_part1();
+            day5_part2();
         },
         _ => {
             println!("Day {} not implemented yet", day);
