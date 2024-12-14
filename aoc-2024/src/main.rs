@@ -430,6 +430,169 @@ fn get_mul_inputs(input: &str, start_index: usize) -> Option<(i32, i32)> {
     return None
 }
 
+struct Point {
+    x: usize,
+    y: usize,
+}
+
+fn day4_part1() {
+    println!("--- Day 4: Ceres Search ---");
+    println!("--- Part 1              ---\n");
+
+    let xmas = "XMAS";
+
+    let day4_input = read_lines("resources/day4_input.txt");
+
+    let mut total = 0;
+    let mut grid: Vec<Vec<char>> = vec![];
+    let mut x_points: Vec<Point> = vec![];
+    for (row, line) in day4_input.iter().enumerate() {
+        let grid_line: Vec<char> = line.chars().collect();
+
+        // @todo Can this be made more efficient with a filter_map?
+        for (column, letter) in line.chars().enumerate() {
+            if letter == 'X' {
+                x_points.push(Point { x: column, y: row });
+            }
+        }
+
+        grid.push(grid_line);
+    }
+
+    for x_point in x_points {
+        // For each X in the grid, identify if it forms XMAS in any viable direction
+
+        let mut search_n: bool = true;
+        let mut search_ne: bool = true;
+        let mut search_e: bool = true;
+        let mut search_se: bool = true;
+        let mut search_s: bool = true;
+        let mut search_sw: bool = true;
+        let mut search_w: bool = true;
+        let mut search_nw: bool = true;
+
+        // Prevent searching in a direction that cannot possibly have an answer to avoid extra computation
+        if x_point.x < xmas.len() - 1 {
+            search_nw = false;
+            search_w = false;
+            search_sw = false;
+        } else if x_point.x > grid[0].len() - xmas.len() {
+            search_ne = false;
+            search_e = false;
+            search_se = false;
+        }
+
+        if x_point.y < xmas.len() - 1 {
+            search_nw = false;
+            search_n = false;
+            search_ne = false;
+        } else if x_point.y > grid.len() - xmas.len() {
+            search_sw = false;
+            search_s = false;
+            search_se = false;
+        }
+
+        let mut word_list: Vec<String> = vec![];
+
+        if search_n {
+            word_list.push([grid[x_point.y][x_point.x], grid[x_point.y - 1][x_point.x], grid[x_point.y - 2][x_point.x], grid[x_point.y - 3][x_point.x]].iter().collect());
+        }
+
+        if search_ne {
+            word_list.push([grid[x_point.y][x_point.x], grid[x_point.y - 1][x_point.x + 1], grid[x_point.y - 2][x_point.x + 2], grid[x_point.y - 3][x_point.x + 3]].iter().collect());
+        }
+
+        if search_e {
+            word_list.push([grid[x_point.y][x_point.x], grid[x_point.y][x_point.x + 1], grid[x_point.y][x_point.x + 2], grid[x_point.y][x_point.x + 3]].iter().collect());
+        }
+
+        if search_se {
+            word_list.push([grid[x_point.y][x_point.x], grid[x_point.y + 1][x_point.x + 1], grid[x_point.y + 2][x_point.x + 2], grid[x_point.y + 3][x_point.x + 3]].iter().collect());
+        }
+
+        if search_s {
+            word_list.push([grid[x_point.y][x_point.x], grid[x_point.y + 1][x_point.x], grid[x_point.y + 2][x_point.x], grid[x_point.y + 3][x_point.x]].iter().collect());
+        }
+
+        if search_sw {
+            word_list.push([grid[x_point.y][x_point.x], grid[x_point.y + 1][x_point.x - 1], grid[x_point.y + 2][x_point.x - 2], grid[x_point.y + 3][x_point.x - 3]].iter().collect());
+        }
+
+        if search_w {
+            word_list.push([grid[x_point.y][x_point.x], grid[x_point.y][x_point.x - 1], grid[x_point.y][x_point.x - 2], grid[x_point.y][x_point.x - 3]].iter().collect());
+        }
+
+        if search_nw {
+            word_list.push([grid[x_point.y][x_point.x], grid[x_point.y - 1][x_point.x - 1], grid[x_point.y - 2][x_point.x - 2], grid[x_point.y - 3][x_point.x - 3]].iter().collect());
+        }
+
+        for word in word_list {
+            if word == xmas {
+                total += 1;
+            }
+        }
+
+        // println!(">>>> ({}, {}) | N:{} | NE:{} | E:{} | SE:{} | S:{} | SW:{} | W:{} | NW:{}",
+        //          x_point.x, x_point.y,
+        //          search_n, search_ne, search_e, search_se, search_s, search_sw, search_w, search_nw);
+    }
+
+    println!(">>>> Xmas total: {}\n", total);
+
+    // Keep track of the final answer for my input in case a refactor creates a bug
+    assert_eq!(total, 2507);
+}
+
+fn day4_part2() {
+    println!("--- Day 4: Ceres Search ---");
+    println!("--- Part 2              ---\n");
+
+    let mas: &str = "MAS";
+    let sam: &str = "SAM";
+
+    let day4_input = read_lines("resources/day4_input.txt");
+
+    let mut total = 0;
+    let mut grid: Vec<Vec<char>> = vec![];
+    let mut a_points: Vec<Point> = vec![];
+    for (row, line) in day4_input.iter().enumerate() {
+        let grid_line: Vec<char> = line.chars().collect();
+
+        // @todo Can this be made more efficient with a filter_map?
+        for (column, letter) in line.chars().enumerate() {
+            if letter == 'A' {
+                a_points.push(Point { x: column, y: row });
+            }
+        }
+
+        // println!("{}", line);
+
+        grid.push(grid_line);
+    }
+
+    for a_point in a_points {
+        // For each A in the grid, check if it is the center of an X-MAS
+
+        // Ignore the outermost portion of the grid since any A characters there cannot be valid
+        if a_point.x < 1 || a_point.x > grid[0].len() - 2 || a_point.y < 1 || a_point.y > grid.len() - 2 {
+            continue;
+        }
+
+        // Extract the X of words with the A at the center
+        let word1: String = [grid[a_point.y - 1][a_point.x - 1], grid[a_point.y][a_point.x], grid[a_point.y + 1][a_point.x + 1]].iter().collect();
+        let word2: String = [grid[a_point.y + 1][a_point.x - 1], grid[a_point.y][a_point.x], grid[a_point.y - 1][a_point.x + 1]].iter().collect();
+
+        if (word1 == mas || word1 == sam) && (word2 == mas || word2 == sam) {
+            total += 1;
+        }
+    }
+
+    println!(">>>> X-MAS total: {}\n", total);
+
+    // Keep track of the final answer for my input in case a refactor creates a bug
+    assert_eq!(total, 1969);
+}
+
 fn main() {
     println!("         .     .  .      +     .      .          .");
     println!("     .       .      .     #       .           .");
@@ -471,7 +634,13 @@ fn main() {
             day3_part1();
             day3_part2();
         },
-        _ => {}
+        4 => {
+            day4_part1();
+            day4_part2();
+        },
+        _ => {
+            println!("Day {} not implemented yet", day);
+        }
     }
 
     let elapsed_ms = time.elapsed().as_nanos() as f64 / 1_000_000.0;
