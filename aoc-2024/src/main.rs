@@ -593,16 +593,17 @@ fn day4_part2() {
     assert_eq!(total, 1969);
 }
 
-fn day5_part1() {
+fn day5() {
     println!("--- Day 5: Print Queue ---");
-    println!("--- Part 1             ---\n");
+    println!("--- Parts 1 & 2        ---\n");
 
     let day5_input = read_lines("resources/day5_input.txt");
 
     let mut page_rules: HashMap<i32, Vec<i32>> = HashMap::new();
     let mut page_updates: Vec<Vec<i32>> = vec![];
 
-    let mut total = 0;
+    let mut total: i32 = 0;
+    let mut fixed_total: i32 = 0;
     for line in day5_input {
         if line.contains("|") {
             if let Some(raw_rules) = line.split_once("|") {
@@ -638,24 +639,17 @@ fn day5_part1() {
 
         if update == &original {
             total += update.get(update.len() / 2).unwrap();
+        } else {
+            fixed_total += update.get(update.len() / 2).unwrap();
         }
     }
 
-    println!(">>>> Page total: {}\n", total);
+    println!(">>>> Page total, Part 1: {}", total);
+    println!(">>>> Page total, Part 2: {}\n", fixed_total);
 
     // Keep track of the final answer for my input in case a refactor creates a bug
     assert_eq!(total, 4578);
-}
-
-fn day5_part2() {
-    println!("--- Day 5: Print Queue ---");
-    println!("--- Part 2             ---\n");
-
-    let day5_input = read_lines("resources/day5_input.txt");
-
-
-    // Keep track of the final answer for my input in case a refactor creates a bug
-    // assert_eq!(total, 1969);
+    assert_eq!(fixed_total, 6179);
 }
 
 fn main() {
@@ -676,8 +670,6 @@ fn main() {
     println!("       .         .   .   000     .        .       .");
     println!(".. .. ..................O000O........................ ...... ...");
     println!("... .. .......... Advent of Code 2024 ................... ... ..\n");
-
-    day5_part1();
 
     let args: Vec<String> = env::args().collect();
     if args.len() != 2 {
@@ -706,8 +698,7 @@ fn main() {
             day4_part2();
         },
         5 => {
-            day5_part1();
-            day5_part2();
+            day5();
         },
         _ => {
             println!("Day {} not implemented yet", day);
