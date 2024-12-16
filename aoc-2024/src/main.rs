@@ -1,6 +1,6 @@
-use std::borrow::Borrow;
+use std::borrow::{Borrow, BorrowMut};
 use std::collections::HashMap;
-use std::env;
+use std::{env, vec};
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::time::Instant;
@@ -652,6 +652,220 @@ fn day5() {
     assert_eq!(fixed_total, 6179);
 }
 
+#[derive(Copy, Clone, PartialEq)]
+enum CardinalDirection {
+    North,
+    East,
+    South,
+    West,
+}
+
+impl std::fmt::Display for CardinalDirection {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let direction: &str;
+        match self {
+            CardinalDirection::North => direction = "North",
+            CardinalDirection::East => direction = "East",
+            CardinalDirection::South => direction = "South",
+            CardinalDirection::West => direction = "West",
+        }
+        write!(f, "{}", direction)
+    }
+}
+
+#[derive(Copy, Clone, PartialEq)]
+struct PointWithDirection {
+    x: usize,
+    y: usize,
+    direction: CardinalDirection,
+}
+
+fn move_guard(guard: &mut PointWithDirection, grid: &Vec<Vec<char>>) -> bool {
+    const OBSTRUCTION: char = '#';
+
+    match guard.direction {
+        CardinalDirection::North => {
+            if guard.x == 0 {
+                return false
+            }
+
+            if grid[guard.x - 1][guard.y] == OBSTRUCTION {
+                guard.direction = CardinalDirection::East;
+            } else {
+                guard.x -= 1;
+            }
+        },
+        CardinalDirection::East => {
+            if guard.y == grid[0].len() - 1 {
+                return false
+            }
+
+            if grid[guard.x][guard.y + 1] == OBSTRUCTION {
+                guard.direction = CardinalDirection::South;
+            } else {
+                guard.y += 1;
+            }
+        },
+        CardinalDirection::South => {
+            if guard.x == grid.len() - 1 {
+                return false
+            }
+
+            if grid[guard.x + 1][guard.y] == OBSTRUCTION {
+                guard.direction = CardinalDirection::West;
+            } else {
+                guard.x += 1;
+            }
+        },
+        CardinalDirection::West => {
+            if guard.y == 0 {
+                return false
+            }
+
+            if grid[guard.x][guard.y - 1] == OBSTRUCTION {
+                guard.direction = CardinalDirection::North;
+            } else {
+                guard.y -= 1;
+            }
+        },
+    }
+
+    return true
+}
+
+fn print_grid(grid: &Vec<Vec<char>>) {
+    for row in grid {
+        let row_str: String = row.iter().collect();
+        println!("{}", row_str);
+    }
+
+    println!("");
+}
+
+fn day6_part1() {
+    println!("--- Day 6: Guard Gallivant ---");
+    println!("--- Part 1                 ---\n");
+
+    const GUARD_START_N: char = '^';
+    const VISITED_POINT: char = 'X';
+
+    let day6_input: Vec<String> = read_lines("resources/day6_input.txt");
+
+    let mut total:usize = 0;
+    let mut grid: Vec<Vec<char>> = vec![];
+    let mut guard_point: PointWithDirection = PointWithDirection { x: 0, y: 0, direction: CardinalDirection::North };
+    for (row, line) in day6_input.iter().enumerate() {
+        let grid_line: Vec<char> = line.chars().collect();
+
+        if let Some(guard_col) = line.find(GUARD_START_N) {
+            guard_point = PointWithDirection { x: row, y: guard_col, direction: CardinalDirection::North };
+        }
+
+        grid.push(grid_line);
+    }
+
+    grid[guard_point.x][guard_point.y] = VISITED_POINT;
+    while move_guard(guard_point.borrow_mut(), &grid) {
+        grid[guard_point.x][guard_point.y] = VISITED_POINT;
+    }
+
+    print_grid(&grid);
+
+    for row in grid {
+        total += row.iter().filter(|letter| **letter == 'X').count();
+    }
+
+    println!(">>>> Total unique {}", total);
+
+    // Keep track of the final answer for my input in case a refactor creates a bug
+    assert_eq!(total, 4988);
+}
+
+fn day6_part2() {
+    println!("--- Day 6: Guard Gallivant ---");
+    println!("--- Part 2                 ---\n");
+
+    const GUARD_START_N: char = '^';
+    const VISITED_POINT: char = 'X';
+    const OBSTRUCTION: char = '#';
+    const OBSTRUCTION_DONE: char = '+';
+
+    let day6_input: Vec<String> = read_lines("resources/day6_input.txt");
+
+    let mut total:usize = 0;
+    let mut grid: Vec<Vec<char>> = vec![];
+    let mut slow_guard: PointWithDirection = PointWithDirection { x: 0, y: 0, direction: CardinalDirection::North };
+    let mut fast_guard: PointWithDirection;
+    for (row, line) in day6_input.iter().enumerate() {
+        let grid_line: Vec<char> = line.chars().collect();
+
+        if let Some(guard_col) = line.find(GUARD_START_N) {
+            slow_guard = PointWithDirection { x: row, y: guard_col, direction: CardinalDirection::North };
+        }
+
+        grid.push(grid_line);
+    }
+
+    let start_pose: PointWithDirection = slow_guard;
+    let starting_grid: Vec<Vec<char>> = grid.clone();
+
+    // Generate the list of possible locations for an obstruction
+    while move_guard(slow_guard.borrow_mut(), &grid) {
+        grid[slow_guard.x][slow_guard.y] = VISITED_POINT;
+    }
+
+    let possible_grid: Vec<Vec<char>> = grid.clone();
+
+    // Reset the original grid to make it easier to see what's happening
+    grid = starting_grid.clone();
+
+    for (row_index, row) in possible_grid.iter().enumerate() {
+        for (col_index, position) in row.iter().enumerate() {
+            if row_index == start_pose.x && col_index == start_pose.y {
+                // Skip the starting guard position
+                continue;
+            }
+            // Reset the guard to the starting pose
+            slow_guard = start_pose;
+            fast_guard = start_pose;
+
+            // Only run the simulation for locations where the guard will traverse. If the guard never crosses
+            // a given point, putting an obstacle at that point would not change the outcome.
+            if *position == VISITED_POINT {
+                grid[row_index][col_index] = OBSTRUCTION;
+
+                let mut keep_going: bool = true;
+
+                while keep_going {
+                    // Using the tortoise and hare algorithm, have the slow guard move 1 position and the
+                    // fast guard move 2 positions. If the fast guard catches the slow guard going the same
+                    // direction at the same point, then this is a loop.
+                    move_guard(slow_guard.borrow_mut(), &grid);
+
+                    // If the fast guard ever exits the grid, this is not a loop
+                    keep_going = move_guard(fast_guard.borrow_mut(), &grid);
+
+                    if keep_going {
+                        keep_going = move_guard(fast_guard.borrow_mut(), &grid);
+                    }
+
+                    if fast_guard == slow_guard {
+                        total += 1;
+                        keep_going = false;
+                    }
+                }
+
+                grid[row_index][col_index] = OBSTRUCTION_DONE;
+            }
+        }
+    }
+
+    println!(">>>> Total possible loops {}", total);
+
+    // Keep track of the final answer for my input in case a refactor creates a bug
+    assert_eq!(total, 1697);
+}
+
 fn main() {
     println!("         .     .  .      +     .      .          .");
     println!("     .       .      .     #       .           .");
@@ -699,6 +913,10 @@ fn main() {
         },
         5 => {
             day5();
+        },
+        6 => {
+            day6_part1();
+            day6_part2();
         },
         _ => {
             println!("Day {} not implemented yet", day);
